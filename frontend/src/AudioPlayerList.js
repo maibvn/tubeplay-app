@@ -9,7 +9,7 @@ const AudioPlayerList = () => {
     // Fetch the list of MP3 files from the backend
     const fetchFiles = async () => {
       try {
-        const response = await fetch("http://localhost:5000/files");
+        const response = await fetch(`${process.env.API_DOMAIN}files`);
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -41,7 +41,7 @@ const AudioPlayerList = () => {
               <h3>{file}</h3>
               <audio controls autoPlay={index === 0}>
                 <source
-                  src={`http://localhost:5000/files/${file}`}
+                  src={`${process.env.API_DOMAIN}files/${file}`}
                   type="audio/mpeg"
                 />
                 Your browser does not support the audio element.
