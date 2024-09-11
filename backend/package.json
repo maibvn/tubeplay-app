@@ -1,7 +1,7 @@
 {
   "name": "youtube-mp3",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js"
@@ -21,8 +21,6 @@
     "fs": "^0.0.1-security",
     "fs-extra": "^11.2.0",
     "nodemon": "^3.1.4",
-    "youtube-dl-exec": "^3.0.2",
-    "youtube-mp3-downloader": "^0.7.11",
     "ytpl": "^2.3.0"
   }
 }
