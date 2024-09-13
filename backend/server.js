@@ -1,61 +1,117 @@
+require("dotenv").config();
 const express = require("express");
 const ytdl = require("@distube/ytdl-core");
 const ytpl = require("ytpl");
-const fs = require("fs-extra");
-const path = require("path");
-const { PassThrough } = require("stream");
-// const ffmpeg = require("fluent-ffmpeg");
-const ffmpeg = require("ffmpeg");
 const cors = require("cors");
-const outputDir = path.join(__dirname, "downloads");
-// Create output directory if it doesn't exist
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir);
-}
+const { Dropbox } = require("dropbox");
+const fetch = require("node-fetch");
+const { Readable } = require("stream");
 
 const port = process.env.PORT || 5000;
 
 const app = express();
 
-app.use(cors());
+// app.use(cors());
+app.use(
+  cors({
+    origin: "*", // Adjust according to your needs (e.g., specify allowed origins)
+  })
+);
+
+// Utility function to convert binary data to a readable stream
+const bufferToStream = (buffer) => {
+  const readable = new Readable();
+  readable._read = () => {}; // _read is required but you can noop it
+  readable.push(buffer);
+  readable.push(null);
+  return readable;
+};
+
+const dbx = new Dropbox({
+  accessToken: process.env.DROPBOX_ACCESS_TOKEN,
+  fetch: fetch,
+});
+
 // Endpoint to list all MP3 files
-app.get("/files", (req, res) => {
-  fs.readdir(outputDir, (err, files) => {
-    if (err) {
-      return res.status(500).json({ error: "Error reading directory" });
-    }
-    const mp3Files = files.filter((file) => file.endsWith(".mp3"));
-    res.json(mp3Files);
-  });
-});
+app.get("/files", async (req, res) => {
+  const folderPath = "/test"; // Replace with your folder path in Dropbox
 
-// Endpoint to stream a specific MP3 file
-app.get("/files/:filename", (req, res) => {
-  const filePath = path.join(outputDir, req.params.filename);
-  res.sendFile(filePath);
-});
+  try {
+    // List folder contents
+    const response = await dbx.filesListFolder({ path: folderPath });
+    const files = response.result.entries.map((entry) => ({
+      path_lower: entry.path_lower,
+      name: entry.name,
+    }));
 
-// Endpoint to start the process
-const downloadAudio = async (url, title, next) => {
-  const outputFilePath = path.join(outputDir, `${title}.mp3`);
-
-  if (fs.existsSync(outputFilePath)) {
-    return next();
+    const file = files.map((f) => f.name);
+    res.json(file);
+  } catch (error) {
+    console.error("Error listing files from Dropbox:", error);
+    res.status(500).json({ error: "Error listing files" });
   }
-  // Download and save the audio
-  return new Promise((resolve, reject) => {
-    const stream = ytdl(url, { filter: "audioonly" }).pipe(
-      fs.createWriteStream(outputFilePath)
-    );
+});
+// Endpoint to stream MP3 files from Dropbox
+app.get("/files/:filename", async (req, res) => {
+  const { filename } = req.params;
+  const dropboxPath = `/test/${filename}`;
 
-    stream.on("finish", () => {
-      console.log(`${title}.mp3 has been downloaded.`);
-      resolve(); // Resolve the promise on successful download
+  try {
+    // Get the file metadata to check if it exists
+    await dbx.filesGetMetadata({ path: dropboxPath });
+
+    // Download the file
+    const response = await dbx.filesDownload({ path: dropboxPath });
+
+    // Get file content as a buffer
+    const fileContent = response.result.fileBinary;
+
+    // Set the appropriate content type
+    res.setHeader("Content-Type", "audio/mpeg");
+
+    // Convert buffer to a stream and pipe it to the response
+    const fileStream = bufferToStream(fileContent);
+    fileStream.pipe(res);
+  } catch (error) {
+    if (error.response && error.response.status === 409) {
+      console.error("Conflict error:", error);
+      res.status(409).json({ error: "File conflict or path issue" });
+    } else {
+      console.error("Error streaming file from Dropbox:", error);
+      res.status(500).json({ error: "Error streaming file" });
+    }
+  }
+});
+
+const uploadToDropbox = async (url, dropboxPath) => {
+  return new Promise((resolve, reject) => {
+    const ytdlStream = ytdl(url, { filter: "audioonly" });
+
+    const chunks = [];
+    ytdlStream.on("data", (chunk) => {
+      chunks.push(chunk); // Collect chunks of data
     });
 
-    stream.on("error", (err) => {
-      console.error(`Error downloading ${title}:`, err);
-      reject(err); // Reject the promise if there's an error
+    ytdlStream.on("end", async () => {
+      const buffer = Buffer.concat(chunks); // Concatenate the chunks into a single buffer
+
+      try {
+        // Upload the buffer to Dropbox
+        const response = await dbx.filesUpload({
+          path: dropboxPath,
+          contents: buffer,
+        });
+        console.log(`File uploaded to Dropbox at: ${dropboxPath}`);
+        resolve(response);
+      } catch (error) {
+        console.error("Error uploading to Dropbox:", error);
+        reject(error);
+      }
+    });
+
+    ytdlStream.on("error", (err) => {
+      console.error("Error downloading audio:", err);
+      reject(err);
     });
   });
 };
@@ -68,23 +124,29 @@ async function getPlaylistUrls(playlistUrl) {
     // Extract video URLs
     const urls = playlist.items.map((item) => item.shortUrl);
 
-    return { urls };
+    return { urls, songInfo: playlist.items };
   } catch (error) {
     console.error("Error fetching playlist:", error);
   }
 }
-app.get("/", (req, res, next) => {
-  const playlistUrl =
-    "https://www.youtube.com/playlist?list=PLe4G0yoIuLVUwu5ypCniPGC6fn2-S4uP2"; // Replace with your playlist URL
+
+app.get("/playlist", (req, res, next) => {
+  const playlistUrl = req.query.plUrl;
+
+  // https://youtube.com/playlist?list=PLe4G0yoIuLVWGkDFV9MuKq98GuZwncjnN
+  // const playlistUrl =
+  //   "https://www.youtube.com/playlist?list=PLe4G0yoIuLVUwu5ypCniPGC6fn2-S4uP2"; // Replace with your playlist URL
 
   getPlaylistUrls(playlistUrl)
-    .then(({ urls }) => {
+    .then(({ urls, songInfo }) => {
       const promises = urls.map((url, i) => {
-        const title = `abc${i}`;
-        return downloadAudio(url, title, next);
+        const dropboxPath = `/test/${songInfo[i].title.replace(
+          /\s+/g,
+          ""
+        )}.mp3`;
+        // Upload Audio
+        return uploadToDropbox(url, dropboxPath, next);
       });
-
-      // Wait for all downloads to finish
       return Promise.all(promises);
     })
     .then(() => {

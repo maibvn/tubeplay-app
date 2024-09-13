@@ -4,28 +4,41 @@ import AudioPlayerList from "./AudioPlayerList";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [plUrl, setPlUrl] = useState(null);
 
-  useEffect(() => {
-    const fetchPL = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`${process.env.REACT_APP_API_DOMAIN}/`);
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        if (response.ok) {
-          setIsLoading(false);
-        }
-      } catch (error) {
-        // setError(error.message);
+  const plRef = useRef();
+  const searchPL = () => {
+    const link = plRef.current.value;
+
+    if (!link) return;
+    setPlUrl(link);
+    fetchPL(link);
+  };
+  const fetchPL = async (link) => {
+    setIsLoading(true);
+    const apiUrl = `${process.env.REACT_APP_API_DOMAIN}/playlist/?plUrl=${link}`;
+
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
-    };
-    fetchPL();
-  }, []);
+      if (response.ok) {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      // setError(error.message);
+    }
+  };
+  // useEffect(() => {
+  //   // fetchPL();
+  // }, []);
   return (
     <>
-      {isLoading && <div>Loading...</div>}
-      {!isLoading && <AudioPlayerList />}
+      <input ref={plRef} placeholder="Playlist"></input>
+      <button onClick={searchPL}>Get PL</button>
+      {/* {isLoading && plRef && <div>Loading...</div>} */}
+      {!isLoading && plUrl && <AudioPlayerList />}
     </>
   );
 }
