@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import AudioPlayer from "./AudioPlayerList";
 import AudioPlayerList from "./AudioPlayerList";
 
 function App() {
@@ -7,6 +6,7 @@ function App() {
   const [plUrl, setPlUrl] = useState(null);
 
   const plRef = useRef();
+
   const searchPL = () => {
     const link = plRef.current.value;
 
@@ -27,18 +27,15 @@ function App() {
         setIsLoading(false);
       }
     } catch (error) {
-      // setError(error.message);
+      console.log(error);
     }
   };
-  // useEffect(() => {
-  //   // fetchPL();
-  // }, []);
   return (
     <>
       <input ref={plRef} placeholder="Playlist"></input>
       <button onClick={searchPL}>Get PL</button>
-      {/* {isLoading && plRef && <div>Loading...</div>} */}
-      {!isLoading && plUrl && <AudioPlayerList />}
+      {/* {!isLoading && plUrl && <AudioPlayerList />} */}
+      {<AudioPlayerList />}
     </>
   );
 }

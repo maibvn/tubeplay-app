@@ -32,6 +32,61 @@ const dbx = new Dropbox({
   fetch: fetch,
 });
 
+// GET ACCESS TOKEN
+const clientId = process.env.DROPBOX_ID;
+const clientSecret = process.env.DROPBOX_SECRET;
+const redirectUri = "http://localhost:5000"; // Must match with your Dropbox app settings
+
+// // Route to generate and display the Dropbox OAuth authorization URL
+// app.get("/auth", (req, res) => {
+//   const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(
+//     redirectUri
+//   )}`;
+//   res.send(`<a href="${authUrl}">Authorize App with Dropbox</a>`);
+// });
+// Redirect URI route to receive the authorization code
+app.get("/", async (req, res) => {
+  const authorizationCode = req.query.code;
+
+  if (!authorizationCode) {
+    return res.send("No authorization code received");
+  }
+
+  try {
+    // Exchange the authorization code for an access token and refresh token
+    const response = await axios.post(
+      "https://api.dropboxapi.com/oauth2/token",
+      qs.stringify({
+        code: authorizationCode,
+        grant_type: "authorization_code",
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    const { access_token, refresh_token, expires_in } = response.data;
+
+    res.send(`
+      <h1>Tokens Received</h1>
+      <p>Access Token: ${access_token}</p>
+      <p>Refresh Token: ${refresh_token}</p>
+      <p>Expires In: ${expires_in} seconds</p>
+    `);
+
+    console.log("Access Token:", access_token);
+    console.log("Refresh Token:", refresh_token); // Store this securely for future use
+    console.log("Expires In:", expires_in);
+  } catch (error) {
+    console.error("Error fetching tokens:", error.response.data);
+    res.send("Error fetching tokens");
+  }
+});
 // Endpoint to list all MP3 files
 app.get("/files", async (req, res) => {
   const folderPath = "/test"; // Replace with your folder path in Dropbox
@@ -100,6 +155,7 @@ const uploadToDropbox = async (url, dropboxPath) => {
         const response = await dbx.filesUpload({
           path: dropboxPath,
           contents: buffer,
+          mode: { ".tag": "add" },
         });
         console.log(`File uploaded to Dropbox at: ${dropboxPath}`);
         resolve(response);
