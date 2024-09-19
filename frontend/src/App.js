@@ -32,10 +32,16 @@ function App() {
   };
   return (
     <>
-      <input ref={plRef} placeholder="Playlist"></input>
+      <input
+        ref={plRef}
+        placeholder="Playlist"
+        defaultValue={
+          "https://youtube.com/playlist?list=PLe4G0yoIuLVWGkDFV9MuKq98GuZwncjnN"
+        }
+      ></input>
       <button onClick={searchPL}>Get PL</button>
-      {/* {!isLoading && plUrl && <AudioPlayerList />} */}
-      {<AudioPlayerList />}
+      {!isLoading && plUrl && <AudioPlayerList />}
+      {/* {<AudioPlayerList />} */}
     </>
   );
 }
