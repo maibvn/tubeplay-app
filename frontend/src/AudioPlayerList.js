@@ -32,12 +32,14 @@ const AudioPlayerList = () => {
         setError(error.message);
       }
     };
-    fetchFiles();
+
+    // fetchFiles();
   }, []);
 
   if (error) {
     return <div>Error: {error}</div>;
   }
+  // console.log(dummy_files);
   return (
     <div>
       <h1>Audio Playlist</h1>
@@ -45,21 +47,19 @@ const AudioPlayerList = () => {
         <p>No audio files found</p>
       ) : (
         <ul>
-          {files.map((file, index) => (
-            <li key={file.name}>
-              <h3>{file.name}</h3>
-
+          {/* {files.map((file, index) => (
+            <li key={file}>
+              <h3>{file}</h3>
               <audio controls autoPlay={index === 0}>
                 <source
-                  src={file.streamingUrl}
-                  // src={`${process.env.REACT_APP_API_DOMAIN}/files/${file}`}
+                  src={`${process.env.REACT_APP_API_DOMAIN}/files/${file}`}
                   type="audio/mpeg"
                 />
                 Your browser does not support the audio element.
               </audio>
             </li>
-          ))}
-          {/* {dummy_files.map((file, index) => (
+          ))} */}
+          {dummy_files.map((file, index) => (
             <li key={file}>
               <h3>Song: {index + 1}</h3>
               <audio controls autoPlay={index === 0}>
@@ -67,7 +67,7 @@ const AudioPlayerList = () => {
                 Your browser does not support the audio element.
               </audio>
             </li>
-          ))} */}
+          ))}
         </ul>
       )}
     </div>

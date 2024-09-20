@@ -1,15 +1,17 @@
-import React, { useState, useRef, useEffect } from "react";
-import AudioPlayerList from "../components/AudioPlayerList";
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
-const Home = () => {
+function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [plUrl, setPlUrl] = useState(null);
+  const navigate = useNavigate();
 
   const plRef = useRef();
 
   const searchPL = () => {
     const link = plRef.current.value;
 
+    navigate("/playlist");
     if (!link) return;
     setPlUrl(link);
     fetchPL(link);
@@ -30,21 +32,24 @@ const Home = () => {
       console.log(error);
     }
   };
-
   return (
     <>
-      <input
-        ref={plRef}
-        placeholder="Playlist"
-        defaultValue={
-          "https://youtube.com/playlist?list=PLe4G0yoIuLVWGkDFV9MuKq98GuZwncjnN"
-        }
-      ></input>
-      <button onClick={searchPL}>Get PL</button>
-
-      {!isLoading && plUrl && <AudioPlayerList />}
+      <div className="container-fluid text-center bg-dark">
+        <div className="row justify-content-center ">
+          <div>
+            <input
+              className="col-6 mt-4 p-2"
+              ref={plRef}
+              placeholder="Playlist"
+            ></input>
+          </div>
+          <button className="col-3 btn btn-danger mt-4 p-2" onClick={searchPL}>
+            Get PL
+          </button>
+        </div>
+      </div>
     </>
   );
-};
+}
 
 export default Home;

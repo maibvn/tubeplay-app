@@ -1,4 +1,4 @@
-body {
+/* body {
   color: white;
   margin: 0;
   font-size: 1.5rem;
@@ -8,7 +8,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: black;
-}
+  width: 100vw;
+  height: 100vw
+} */
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
@@ -17,9 +19,7 @@ code {
 .App {
   text-align: center;
 }
-h1 {
-  color: red;
-}
+
 button,
 input {
   padding: 1rem 1.5rem;
@@ -28,7 +28,6 @@ input {
 }
 input {
   margin-right: 1rem;
-  background-color: rgb(0, 0, 0);
   border: 1px solid white;
   color: white;
 }

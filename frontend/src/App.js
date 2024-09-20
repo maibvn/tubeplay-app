@@ -1,23 +1,18 @@
-import React, { useState, useRef, useEffect } from "react";
-import Home from "./pages/Home";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import DropboxOAuth from "./components/DropboxOAuth";
-import DropboxCallback from "./components/DropboxCallback";
+import React from "react";
+import AudioPlayerList from "./AudioPlayerList";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import Home from "./Home";
 function App() {
+  // xong mỗi khi anh làm gì xong anh push code lên là đc nha
   return (
-    <>
-      <Router>
-        <Routes>
-          {/* <Route path="/" element={<DropboxOAuth />} /> */}
-          {/* <Route path="/dropbox/callback/" element={<DropboxCallback />} /> */}
-          <Route path="/home" element={<Home />} />
-        </Routes>
-      </Router>
-      {/* <DropboxOAuth />
-      <DropboxCallback />
-       */}
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        {/* {!isLoading && plUrl && <AudioPlayerList />} */}
+        <Route path="/playlist" element={<AudioPlayerList />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
