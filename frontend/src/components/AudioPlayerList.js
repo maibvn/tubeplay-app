@@ -32,14 +32,12 @@ const AudioPlayerList = () => {
         setError(error.message);
       }
     };
-
     fetchFiles();
   }, []);
 
   if (error) {
     return <div>Error: {error}</div>;
   }
-
   return (
     <div>
       <h1>Audio Playlist</h1>
@@ -48,11 +46,13 @@ const AudioPlayerList = () => {
       ) : (
         <ul>
           {files.map((file, index) => (
-            <li key={file}>
-              <h3>{file}</h3>
+            <li key={file.name}>
+              <h3>{file.name}</h3>
+
               <audio controls autoPlay={index === 0}>
                 <source
-                  src={`${process.env.REACT_APP_API_DOMAIN}/files/${file}`}
+                  src={file.streamingUrl}
+                  // src={`${process.env.REACT_APP_API_DOMAIN}/files/${file}`}
                   type="audio/mpeg"
                 />
                 Your browser does not support the audio element.
