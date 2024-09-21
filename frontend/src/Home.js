@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+// import Layout from "./Layout";
 
 function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -32,14 +33,21 @@ function Home() {
       console.log(error);
     }
   };
+
   return (
     <>
-      <div className="container-fluid text-center bg-dark">
+      <div
+        className="container-fluid text-center bg-dark"
+        style={{ height: "100vh" }}
+      >
         <div className="row justify-content-center ">
           <div>
             <input
               className="col-6 mt-4 p-2"
               ref={plRef}
+              defaultValue={
+                "https://youtube.com/playlist?list=PLe4G0yoIuLVWGkDFV9MuKq98GuZwncjnN"
+              }
               placeholder="Playlist"
             ></input>
           </div>
