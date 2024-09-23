@@ -18,7 +18,7 @@ function Home() {
   };
   const fetchPL = async (link) => {
     setIsLoading(true);
-    const apiUrl = `${process.env.REACT_APP_API_DOMAIN}/playlist/?plUrl=${link}`;
+    const apiUrl = `${process.env.REACT_APP_API_DOMAIN}/api/playlist/?plUrl=${link}`;
 
     try {
       const response = await fetch(apiUrl);
