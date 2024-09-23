@@ -11,7 +11,7 @@ function SignUp() {
   const navigate = useNavigate();
 
   const postSignup = async () => {
-    const res = await fetch(`${SERVER_URL}/signup`, {
+    const res = await fetch(`${process.env.REACT_APP_API_DOMAIN}/signup`, {
       method: "POST",
       body: JSON.stringify({
         email: enteredEmail,

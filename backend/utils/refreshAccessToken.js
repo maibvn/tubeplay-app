@@ -28,7 +28,7 @@ async function getAccessTokenFromRefreshToken(refreshToken) {
 // Example usage
 async function initializeDropbox() {
   const refreshToken = process.env.DROPBOX_REFRESH_TOKEN; // Your stored refresh token
-  console.log("initulize dropbox");
+
   try {
     const data = await getAccessTokenFromRefreshToken(refreshToken);
 

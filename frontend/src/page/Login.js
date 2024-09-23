@@ -12,7 +12,7 @@ function Login({ setIsLogin, setUser }) {
   });
 
   const postLogin = async () => {
-    const res = await fetch(`${SERVER_URL}/login`, {
+    const res = await fetch(`${process.env.REACT_APP_API_DOMAIN}/login`, {
       method: "POST",
       body: JSON.stringify({ email: enteredEmail, password: enteredPassword }),
       headers: {

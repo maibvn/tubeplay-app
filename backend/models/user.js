@@ -1,30 +1,13 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  dropboxId: {
-    type: String,
-    required: true,
-    unique: true, // Ensure this is unique for each Dropbox account
-  },
-  dropboxAccessToken: {
+  email: {
     type: String,
     required: true,
   },
-  dropboxRefreshToken: {
+  password: {
     type: String,
     required: true,
-  },
-  tokenExpiration: {
-    type: Date,
-    required: true,
-  },
-  dropboxEmail: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
   },
   updatedAt: {
     type: Date,

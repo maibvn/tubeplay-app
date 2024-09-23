@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 // import Layout from "./Layout";
 
 function Home() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [plUrl, setPlUrl] = useState(null);
   const navigate = useNavigate();
 
@@ -12,7 +12,6 @@ function Home() {
   const searchPL = () => {
     const link = plRef.current.value;
 
-    navigate("/playlist");
     if (!link) return;
     setPlUrl(link);
     fetchPL(link);
@@ -28,6 +27,7 @@ function Home() {
       }
       if (response.ok) {
         setIsLoading(false);
+        navigate("/playlist");
       }
     } catch (error) {
       console.log(error);
@@ -55,6 +55,12 @@ function Home() {
             Get PL
           </button>
         </div>
+        {isLoading && (
+          <img
+            style={{ width: "50px", height: "50px" }}
+            src={process.env.REACT_APP_LOADING_GIF}
+          ></img>
+        )}
       </div>
     </>
   );

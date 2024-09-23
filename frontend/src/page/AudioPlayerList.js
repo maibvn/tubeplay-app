@@ -73,20 +73,8 @@ const AudioPlayerList = () => {
         <p>No audio files found</p>
       ) : (
         <ul>
-          {/* {files.map((file, index) => (
-            <li key={file}>
-              <h3>{file}</h3>
-              <audio controls autoPlay={index === 0}>
-                <source
-                  src={`${process.env.REACT_APP_API_DOMAIN}/files/${file}`}
-                  type="audio/mpeg"
-                />
-                Your browser does not support the audio element.
-              </audio>
-            </li>
-          ))} */}
-          {dummy_files.map((file, index) => (
-            <li key={file}>
+          {files.map((file, index) => (
+            <li key={file.name}>
               <h3>{file.name}</h3>
               <audio controls autoPlay={index === 0}>
                 <source src={file.streamingUrl} type="audio/mpeg" />
@@ -94,6 +82,15 @@ const AudioPlayerList = () => {
               </audio>
             </li>
           ))}
+          {/* {dummy_files.map((file, index) => (
+            <li key={file}>
+              <h3>{file.name}</h3>
+              <audio controls autoPlay={index === 0}>
+                <source src={file.streamingUrl} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </li>
+          ))} */}
         </ul>
       )}
     </div>

@@ -3,23 +3,17 @@ const express = require("express");
 const ytdl = require("@distube/ytdl-core");
 const ytpl = require("ytpl");
 const cors = require("cors");
-const { Dropbox } = require("dropbox");
-const fetch = require("node-fetch");
-const { Readable } = require("stream");
-// const getAccessToken = require("./utils/getAccessToken");
 const connectDB = require("./utils/connectDB");
 const initializeDropbox = require("./utils/refreshAccessToken");
-// const { dbx, refreshAccessToken } = require("./utils/refreshAccessToken");
 
+// DATABASE
 connectDB();
 
 const port = process.env.PORT || 5000;
 const app = express();
 app.use(express.json());
-// const dbx = new Dropbox({
-//   accessToken: process.env.DROPBOX_ACCESS_TOKEN,
-//   fetch: fetch,
-// });
+
+// DROPBOX
 let dbx; // Declare dbx globally
 
 // Function to initialize Dropbox client
@@ -41,16 +35,6 @@ app.use(
   })
 );
 
-// Utility function to convert binary data to a readable stream
-const bufferToStream = (buffer) => {
-  const readable = new Readable();
-  readable._read = () => {}; // _read is required but you can noop it
-  readable.push(buffer);
-  readable.push(null);
-  return readable;
-};
-
-// // Endpoint to list all MP3 files
 app.get("/files", async (req, res) => {
   const folderPath = "/test"; // Replace with your folder path in Dropbox
 
@@ -58,134 +42,92 @@ app.get("/files", async (req, res) => {
     // List folder contents
     const response = await dbx.filesListFolder({ path: folderPath });
 
-    // Map entries to include filename and streaming URL
+    // Map entries to include filename and a streaming URL for each song
     const files = await Promise.all(
       response.result.entries.map(async (entry) => {
-        try {
-          // Check if a shared link already exists
-          const sharedLinkResponse = await dbx.sharingListSharedLinks({
-            path: entry.path_lower,
-          });
+        if (entry[".tag"] === "file" && entry.name.endsWith(".mp3")) {
+          // Only handle MP3 files
+          try {
+            // Check if a shared link already exists for the file
+            const sharedLinkResponse = await dbx.sharingListSharedLinks({
+              path: entry.path_lower,
+              direct_only: true, // Get direct links only (not folders)
+            });
 
-          let sharedLink;
-          if (sharedLinkResponse.result.links.length > 0) {
-            // Use the existing shared link
-            sharedLink = sharedLinkResponse.result.links[0].url.replace(
-              "dl=0",
-              "raw=1"
+            let sharedLink;
+            if (sharedLinkResponse.result.links.length > 0) {
+              // Use the existing shared link
+              sharedLink = sharedLinkResponse.result.links[0].url.replace(
+                "dl=0",
+                "raw=1"
+              );
+            } else {
+              // Create a new shared link if none exists for the file
+              const newSharedLinkResponse =
+                await dbx.sharingCreateSharedLinkWithSettings({
+                  path: entry.path_lower,
+                });
+              sharedLink = newSharedLinkResponse.result.url.replace(
+                "dl=0",
+                "raw=1"
+              );
+            }
+            // Return file name and streaming URL
+            return {
+              name: entry.name,
+              streamingUrl: sharedLink,
+            };
+          } catch (linkError) {
+            console.error(
+              "Error creating/fetching shared link for file:",
+              linkError
             );
-          } else {
-            // Create a new shared link if none exists
-            const newSharedLinkResponse =
-              await dbx.sharingCreateSharedLinkWithSettings({
-                path: entry.path_lower,
-              });
-            sharedLink = newSharedLinkResponse.result.url.replace(
-              "dl=0",
-              "raw=1"
-            );
+            return {
+              name: entry.name,
+              streamingUrl: null, // Handle missing links as needed
+            };
           }
-
-          return {
-            name: entry.name,
-            streamingUrl: sharedLink,
-          };
-        } catch (linkError) {
-          console.error("Error creating/fetching shared link:", linkError);
-          return {
-            name: entry.name,
-            streamingUrl: null, // Set to null or handle as needed
-          };
+        } else {
+          return null; // Skip non-MP3 files
         }
       })
     );
 
-    res.json(files); // Send the array of objects
+    // Filter out any null results (for non-MP3 files)
+    const validFiles = files.filter((file) => file !== null);
+
+    res.json(validFiles); // Send the array of objects (filename and streaming URL)
   } catch (error) {
     console.error("Error listing files from Dropbox:", error);
     res.status(500).json({ error: "Error listing files" });
   }
 });
 
-// app.get("/files", async (req, res) => {
-//   // const dbx = new Dropbox({
-//   //   accessToken: process.env.DROPBOX_ACCESS_TOKEN,
-//   //   fetch: fetch,
-//   // });
-//   const folderPath = "/test"; // Replace with your folder path in Dropbox
-
-//   try {
-//     // List folder contents
-//     const response = await dbx.filesListFolder({ path: folderPath });
-//     // const files = response.result.entries.map((entry) => ({
-//     //   path_lower: entry.path_lower,
-//     //   name: entry.name,
-//     // }));
-//     const file = await Promise.all(
-//       response.result.entries.map(async (entry) => {
-//         const sharedLinkResponse =
-//           await dbx.sharingCreateSharedLinkWithSettings({
-//             path: entry.path_lower,
-//           });
-//         const sharedLink = sharedLinkResponse.result.url.replace(
-//           "?dl=0",
-//           "?raw=1"
-//         ); // Change to raw link for direct streaming
-
-//         return {
-//           name: entry.name,
-//           streamingUrl: sharedLink,
-//         };
-//       })
-//     );
-//     console.log(file);
-//     // const file = files.map((f) => f.name);
-//     res.json(file);
-//   } catch (error) {
-//     console.error("Error listing files from Dropbox:", error);
-//     res.status(500).json({ error: "Error listing files" });
-//   }
-// });
-// Endpoint to stream MP3 files from Dropbox
-// app.get("/files/:filename", async (req, res) => {
-//   const { filename } = req.params;
-//   const dropboxPath = `/test/${filename}`;
-
-//   try {
-//     // Get the file metadata to check if it exists
-//     await dbx.filesGetMetadata({ path: dropboxPath });
-
-//     // Download the file
-//     const response = await dbx.filesDownload({ path: dropboxPath });
-
-//     // Get file content as a buffer
-//     const fileContent = response.result.fileBinary;
-
-//     // Set the appropriate content type
-//     res.setHeader("Content-Type", "audio/mpeg");
-//     // Create a readable stream from the buffer
-//     const stream = new Readable();
-//     stream.push(fileContent);
-//     stream.push(null); // Signal that the stream has ended
-
-//     // Pipe the stream to the response
-//     stream.pipe(res);
-//     // // Convert buffer to a stream and pipe it to the response
-//     // const fileStream = bufferToStream(fileContent);
-//     // fileStream.pipe(res);
-//   } catch (error) {
-//     if (error.response && error.response.status === 409) {
-//       console.error("Conflict error:", error);
-//       res.status(409).json({ error: "File conflict or path issue" });
-//     } else {
-//       console.error("Error streaming file from Dropbox:", error);
-//       res.status(500).json({ error: "Error streaming file" });
-//     }
-//   }
-// });
-
 const uploadToDropbox = async (url, dropboxPath) => {
-  return;
+  // Extract the file name from the dropboxPath
+  const fileName = dropboxPath.split("/").pop();
+
+  try {
+    // List files in the folder to check for existence
+    const folderPath = dropboxPath.substring(0, dropboxPath.lastIndexOf("/")); // Get the folder path
+    const response = await dbx.filesListFolder({ path: folderPath });
+
+    // Check if any file has the same name
+    const fileExists = response.result.entries.some(
+      (entry) => entry.name === fileName
+    );
+
+    if (fileExists) {
+      // console.log(
+      //   `File with the name ${fileName} already exists. Upload canceled.`
+      // );
+      return; // Cancel the upload
+    }
+  } catch (error) {
+    console.error("Error checking existing files:", error);
+    return; // Optionally handle the error
+  }
+
   return new Promise((resolve, reject) => {
     const ytdlStream = ytdl(url, { filter: "audioonly" });
 
@@ -195,7 +137,6 @@ const uploadToDropbox = async (url, dropboxPath) => {
     });
 
     ytdlStream.on("end", async () => {
-      console.log("end yt");
       const buffer = Buffer.concat(chunks); // Concatenate the chunks into a single buffer
 
       try {
@@ -265,16 +206,6 @@ app.get("/playlist", (req, res, next) => {
         .json({ message: "Error processing playlist", error: err });
     });
 });
-
-// app.post("/auth/dropbox/token", async (req, res) => {
-//   const { code, redirect_uri } = req.body; // Get the authorization code from the request body
-
-//   getAccessToken(code, redirect_uri).then((data) => {
-//     const { access_token, uid, refresh_token } = data;
-
-//     res.sendStatus(200);
-//   });
-// });
 
 app.listen(port, () => {
   console.log("Server is running on port 5000");
