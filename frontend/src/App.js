@@ -11,6 +11,7 @@ function App() {
   // set state of login
   const [isLogin, setIsLogin] = useState(false);
   const [user, setUser] = useState({});
+  const [validToken, setValidToken] = useState(false);
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
@@ -31,9 +32,11 @@ function App() {
         .then((res) => {
           const user = res.data.userEmail;
           console.log(user);
+
           // window.location.href = res.status === 200 ? "/" : "/login";
         })
         .catch((err) => {
+          localStorage.removeItem("tubeplay-token");
           console.error("Error verifying token:", err);
         });
     } else {
@@ -55,7 +58,6 @@ function App() {
             />
           }
         />
-        {/* {!isLoading && plUrl && <AudioPlayerList />} */}
         <Route path="/playlist" element={<AudioPlayerList />} />
       </Routes>
     </BrowserRouter>

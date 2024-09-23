@@ -29,6 +29,7 @@ function Login({ setIsLogin, setUser }) {
     // Saving token for next signin in
     if (data.token) {
       localStorage.setItem("tubeplay-token", JSON.stringify(data.token));
+      navigate("/");
     }
     if (!res.ok) {
       throw new Error("Could not login!");
@@ -47,7 +48,6 @@ function Login({ setIsLogin, setUser }) {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("tubeplay-token");
     if (response.isAuthenticated) {
       // setIsLogin(true);
       // setUser(response.user);
@@ -55,8 +55,7 @@ function Login({ setIsLogin, setUser }) {
       //   "userInfo",
       //   JSON.stringify({ isLogin: true, user: response.user })
       // );
-
-      navigate("/");
+      // navigate("/");
     } else {
       setEnteredPassword("");
     }
