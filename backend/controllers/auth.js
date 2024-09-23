@@ -56,19 +56,6 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// // Middleware to protect routes
-// exports.authenticateToken = (req, res, next) => {
-//   console.log("verify");
-//   const token = req.headers["authorization"]?.split(" ")[1]; // Bearer <token>
-
-//   if (!token) return res.sendStatus(401);
-
-//   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-//     if (err) return res.sendStatus(403);
-//     req.user = user;
-//     next();
-//   });
-// };
 // Middleware to get user info from token
 exports.authenticateToken = async (req, res) => {
   const token = req.headers["authorization"]?.split(" ")[1];

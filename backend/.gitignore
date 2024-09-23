@@ -6,7 +6,7 @@ logs/
 *.log
 
 # Ignore environment variables
-.env
+# .env
 
 # Ignore build outputs
 dist/
