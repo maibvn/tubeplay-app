@@ -33,7 +33,6 @@ exports.getPlaylist = (req, res) => {
 exports.getAllSongs = async (req, res) => {
   const dbx = req.dbx;
   const folderPath = "/test"; // Replace with your folder path in Dropbox
-
   try {
     // List folder contents
     const response = await dbx.filesListFolder({ path: folderPath });

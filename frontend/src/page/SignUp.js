@@ -11,22 +11,30 @@ function SignUp() {
   const navigate = useNavigate();
 
   const postSignup = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API_DOMAIN}/signup`, {
-      method: "POST",
-      body: JSON.stringify({
-        email: enteredEmail,
-        password: enteredPassword,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const res = await fetch(
+      `${process.env.REACT_APP_API_DOMAIN}/api/auth/signup`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: enteredEmail,
+          password: enteredPassword,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     const data = await res.json();
-    // console.log("response: ", data);
-    if (!res.ok) {
-      throw new Error(data.message || "Could not register an account!");
+
+    if (res.status === 201) {
+      alert("Register successful. Please log in!");
+      navigate("/login");
+    } else if (res.status === 409) {
+      setResponse(data);
+    } else if (!res.ok) {
+      console.log(res);
+      // throw new Error(data.message || "Could not register an account!");
     }
-    setResponse(data);
     return null;
   };
 
@@ -38,14 +46,6 @@ function SignUp() {
       alert("Please enter all fields!");
     }
   };
-
-  useEffect(() => {
-    if (response.isExisted === false) {
-      navigate("/login");
-    } else {
-      setEnteredPassword("");
-    }
-  }, [response]);
 
   return (
     <div className="container d-flex flex-column align-items-center text-center my-5">

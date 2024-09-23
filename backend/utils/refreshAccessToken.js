@@ -39,7 +39,6 @@ async function initializeDropbox() {
       accessToken: access_token,
       fetch: fetch,
     });
-
     return dbx; // Now you can use the Dropbox client
   } catch (error) {
     console.error("Failed to initialize Dropbox client:", error);

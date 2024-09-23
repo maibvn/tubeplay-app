@@ -18,9 +18,9 @@ exports.uploadToDropbox = async (url, dropboxPath, req) => {
     );
 
     if (fileExists) {
-      console.log(
-        `File with the name ${fileName} already exists. Upload canceled.`
-      );
+      // console.log(
+      //   `File with the name ${fileName} already exists. Upload canceled.`
+      // );
       return; // Cancel the upload
     }
   } catch (error) {

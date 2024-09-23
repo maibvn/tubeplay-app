@@ -12,15 +12,24 @@ function Login({ setIsLogin, setUser }) {
   });
 
   const postLogin = async () => {
-    const res = await fetch(`${process.env.REACT_APP_API_DOMAIN}/login`, {
-      method: "POST",
-      body: JSON.stringify({ email: enteredEmail, password: enteredPassword }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const res = await fetch(
+      `${process.env.REACT_APP_API_DOMAIN}/api/auth/login`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: enteredEmail,
+          password: enteredPassword,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     const data = await res.json();
-    // console.log("Login response: ", data);
+    // Saving token for next signin in
+    if (data.token) {
+      localStorage.setItem("tubeplay-token", JSON.stringify(data.token));
+    }
     if (!res.ok) {
       throw new Error("Could not login!");
     }
@@ -38,13 +47,15 @@ function Login({ setIsLogin, setUser }) {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("tubeplay-token");
     if (response.isAuthenticated) {
-      setIsLogin(true);
-      setUser(response.user);
-      localStorage.setItem(
-        "userInfo",
-        JSON.stringify({ isLogin: true, user: response.user })
-      );
+      // setIsLogin(true);
+      // setUser(response.user);
+      // localStorage.setItem(
+      //   "userInfo",
+      //   JSON.stringify({ isLogin: true, user: response.user })
+      // );
+
       navigate("/");
     } else {
       setEnteredPassword("");
