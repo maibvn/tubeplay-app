@@ -48,7 +48,10 @@ function SignUp() {
   };
 
   return (
-    <div className="container d-flex flex-column align-items-center text-center my-5">
+    <div
+      className="container-fluid d-flex flex-column align-items-center text-white text-center bg-dark"
+      style={{ minHeight: "100vh" }}
+    >
       <h2 className="fw-bold mb-4">Sign Up</h2>
       <form className="" onSubmit={postSignupHandler}>
         <input
@@ -77,7 +80,7 @@ function SignUp() {
 
         <button
           type="submit"
-          className="btn btn-primary w-100 fw-bold"
+          className="btn btn-danger w-100 p-3"
           disabled={enteredEmail === "" || enteredPassword === ""}
         >
           Create an account
