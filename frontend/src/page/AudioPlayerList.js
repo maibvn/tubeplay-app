@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import WaveForm from "./WaveForm";
 
 const dummy_files = [
   {
@@ -33,12 +34,10 @@ const dummy_files = [
   },
 ];
 
-// a muốn update cả backend ko hay chỉ frontend thôi- thôi frontend thôi - a đợi e xíu
 const AudioPlayerList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState(null);
-
   useEffect(() => {
     // Fetch the list of MP3 files from the backend
     const fetchFiles = async () => {
@@ -62,6 +61,9 @@ const AudioPlayerList = () => {
     fetchFiles();
   }, []);
 
+  // const audioUrl =
+  //   "https://www.dropbox.com/scl/fi/hymyf52gduklor3kk25w4/ArminvanBuurenfeat.SharondenAdel-InAndOutOfLove-OfficialMusicVideo.mp3?rlkey=h0umw2pbdbb55d6ax9mcturk5&st=c8kncu9u&dl=1";
+
   if (error) {
     return <div>Error: {error}</div>;
   }
@@ -80,6 +82,7 @@ const AudioPlayerList = () => {
                 <source src={file.streamingUrl} type="audio/mpeg" />
                 Your browser does not support the audio element.
               </audio>
+              {/* <WaveForm audioUrl={audioUrl} /> */}
             </li>
           ))}
           {/* {dummy_files.map((file, index) => (
