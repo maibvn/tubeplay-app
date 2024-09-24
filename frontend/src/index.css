@@ -1,1 +1,10 @@
 /* Cái layout này tùy anh làm á. í là ghi đè thì anh ghi inline là nó đề css bootstrap á */
+
+:root {
+    --red:#dc3545;
+    --black:#000;
+}
+
+button {
+    background-color: var(--red);
+}
