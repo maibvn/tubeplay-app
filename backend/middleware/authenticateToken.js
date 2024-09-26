@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User"); // Assuming the User model is located here
+const User = require("../models/user"); // Assuming the User model is located here
 
 // Middleware to authenticate and attach user info to the request
 const authenticateToken = async (req, res, next) => {
@@ -26,7 +26,15 @@ const authenticateToken = async (req, res, next) => {
     // Proceed to the next middleware or route
     next();
   } catch (error) {
-    console.error("Error verifying token:", error);
+    console.log("Error verifying token");
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
+      // Ignore invalid tokens; just call next()
+      return next();
+    }
+
     res.status(403).json({ error: "Invalid token" });
   }
 };

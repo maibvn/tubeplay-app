@@ -28,6 +28,9 @@ function Login({ setIsLogin, setUser }) {
     // Saving token for next signin in
     if (data.token) {
       localStorage.setItem("tubeplay-token", JSON.stringify(data.token));
+
+      // localStorage.removeItem("nonRegisterUserId");
+
       navigate("/");
     }
     if (!res.ok) {

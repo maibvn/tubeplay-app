@@ -1,6 +1,6 @@
 const ytdl = require("@distube/ytdl-core");
 
-exports.uploadToDropbox = async (songs, req) => {
+exports.uploadToDropbox = async (songs, uniqueId, req) => {
   const dbx = req.dbx;
 
   const uploadMultipleSongs = async (url, dropboxPath, thumbnail) => {
@@ -17,7 +17,7 @@ exports.uploadToDropbox = async (songs, req) => {
       );
 
       if (fileExists) {
-        console.log(`${fileName} already exists.`);
+        // console.log(`${fileName} already exists.`);
 
         try {
           // Try to retrieve the existing shared link (if it exists)
@@ -79,7 +79,7 @@ exports.uploadToDropbox = async (songs, req) => {
             mode: { ".tag": "add" },
           });
 
-          console.log(`File uploaded to Dropbox at: ${dropboxPath}`);
+          // console.log(`File uploaded to Dropbox at: ${dropboxPath}`);
 
           // Create a shared link for the newly uploaded file
           const sharedLinkResponse =
@@ -110,7 +110,10 @@ exports.uploadToDropbox = async (songs, req) => {
   // Loop through each song and upload it, collecting the result in an array
   const songUploads = await Promise.all(
     songs.map(async (song) => {
-      const dropboxPath = `/registerdUsers/${song.title}.mp3`;
+      let dropboxPath = `/registerdUsers/${song.title}.mp3`;
+      if (!req.user) {
+        dropboxPath = `/temp/${uniqueId}-${song.title}.mp3`;
+      }
       const result = await uploadMultipleSongs(
         song.ytUrl,
         dropboxPath,

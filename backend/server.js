@@ -34,8 +34,6 @@ const dbxMiddleware = async (req, res, next) => {
 
 app.use(dbxMiddleware);
 
-// app.use(authenticateToken);
-
 // ROUTES
 app.use("/api/auth", authRouter); // Authentication routes
 app.use("/api/playlist", authenticateToken, playlistRouter); // Playlist management

@@ -8,40 +8,39 @@ import SignUp from "./page/SignUp";
 
 import Home from "./page/Home";
 import NavBar from "./page/NavBar";
+
 function App() {
   // set state of login
   const [isLogin, setIsLogin] = useState(false);
   const [user, setUser] = useState({});
   // const [validToken, setValidToken] = useState(false);
 
-  useEffect(() => {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-    if (userInfo) {
-      setIsLogin(userInfo.isLogin);
-      setUser(userInfo.user);
-    }
-  }, []);
-
   const token = JSON.parse(localStorage.getItem("tubeplay-token"));
 
   useEffect(() => {
-    if (token) {
-      axios
-        .get(`${process.env.REACT_APP_API_DOMAIN}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => {
-          const user = res.data.userEmail;
-          console.log(user);
+    const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
-          // window.location.href = res.status === 200 ? "/" : "/login";
-        })
-        .catch((err) => {
-          localStorage.removeItem("tubeplay-token");
-          console.error("Error verifying token:", err);
-        });
+    const fetchUser = async () => {
+      if (token) {
+        axios
+          .get(`${process.env.REACT_APP_API_DOMAIN}/api/playlist`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .then((res) => {
+            const userEmail = res.data.email;
+            setUser({ email: userEmail });
+            setIsLogin(true);
+          })
+          .catch((err) => {
+            console.error("Error verifying token:", err);
+          });
+      }
+    };
+    if (userInfo) {
+      setIsLogin(userInfo.isLogin);
+      setUser(userInfo.user);
     } else {
-      // window.location.href = "/login";
+      fetchUser();
     }
   }, []);
 

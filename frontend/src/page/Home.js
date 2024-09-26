@@ -18,7 +18,7 @@ function Home() {
   };
   const fetchPL = async (link) => {
     setIsLoading(true);
-    const apiUrl = `${process.env.REACT_APP_API_DOMAIN}/api/playlist/?plUrl=${link}`;
+    const apiUrl = `${process.env.REACT_APP_API_DOMAIN}/api/playlist/generate/?plUrl=${link}`;
     const token = JSON.parse(localStorage.getItem("tubeplay-token"));
     try {
       const response = await fetch(apiUrl, {
@@ -29,7 +29,14 @@ function Home() {
       }
       if (response.ok) {
         setIsLoading(false);
-        navigate("/playlist");
+        const data = await response.json();
+
+        const nonRegisterUserId = data.nonRegisterUserId;
+        localStorage.setItem("nonRegisterUserId", nonRegisterUserId);
+
+        navigate("/playlist", {
+          state: { data: data },
+        });
       }
     } catch (error) {
       console.log(error);
@@ -54,7 +61,7 @@ function Home() {
             ></input>
           </div>
           <button className="col-3 btn btn-danger mt-4 p-2" onClick={searchPL}>
-            Get PL
+            Get Playlist
           </button>
         </div>
         {isLoading && (
