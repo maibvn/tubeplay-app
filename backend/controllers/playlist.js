@@ -1,65 +1,63 @@
 const { getPlaylistUrl } = require("../utils/getPlayList");
 const { uploadToDropbox } = require("../utils/uploadToDropbox");
+const User = require("../models/user");
+const Playlist = require("../models/playlist");
 
 // Dummy function to get playlists
 exports.getPlaylist = async (req, res) => {
   const playlistUrl = req.query.plUrl;
+  const userEmail = req.user.email; // Email of the authenticated user
+
+  // Find the user based on the email in req.user
+  const user = await User.findOne({ email: userEmail });
+
+  // if (!user) {
+  //   return res.status(404).json({ message: "User not found" });
+  // }
+  // AFTER
+  // const { v4: uuidv4 } = require("uuid");
+  // const uniqueId = uuidv4(); // Generate a UUID
   // Dropbox folder
   let path = "temp";
-  // console.log(8888, "check user in getting playlist", req.user);
-  if (req.user) {
+  if (user) {
     // Check playlist user has, auto generate
     path = "registerdUsers";
   }
   try {
     const { playlistInfo } = await getPlaylistUrl(playlistUrl);
+    // console.log(playlistInfo);
     const songs = playlistInfo.songs;
+    const results = await uploadToDropbox(songs, req);
 
-    const promises = songs.map(async (song) => {
-      const dropboxPath = `/${path}/${song.title}.mp3`;
-      // Upload Audio and get the streaming link
-      const streamingLink = await uploadToDropbox(
-        song.shortUrl,
-        dropboxPath,
-        req
-      );
-      return {
-        title: song.title,
-        streamingLink: streamingLink,
-      };
-    });
+    const updatedSongs = results.map((song) => ({
+      ...song,
+      dropboxUrl: song.dropboxUrl.replace(/dl=0$/, "dl=1"),
+    }));
 
-    // Wait for all uploads to complete and collect streaming links
-    const songLinks = await Promise.all(promises);
+    playlistInfo.songs = updatedSongs;
 
-    // console.log(songLinks);
-    res
-      .status(200)
-      .json({ message: "Success", playlistInfo, songs: songLinks });
+    if (user) {
+      const newPlaylist = new Playlist({
+        plTitle: playlistInfo.plTitle,
+        plUrl: playlistInfo.plUrl,
+        plSongNum: playlistInfo.plSongNum,
+        songs: playlistInfo.songs, // Array of song objects
+      });
+
+      // Save the playlist to the database
+      await newPlaylist.save();
+
+      // Add the playlist's ObjectId to the user's playlists array
+      user.playlists.push(newPlaylist._id);
+
+      // Save the updated user
+      await user.save();
+    }
+    res.status(200).json({ message: "Success", songs: playlistInfo });
   } catch (err) {
     console.error("Error processing playlist:", err);
     res.status(500).json({ message: "Error processing playlist", error: err });
   }
-  // try {
-  //   const { playlistInfo } = await getPlaylistUrl(playlistUrl);
-  //   const songs = playlistInfo.songs;
-
-  //   const promises = songs.map(async (song) => {
-  //     const dropboxPath = `/${path}/${song.title}.mp3`;
-  //     // Upload Audio
-  //     await uploadToDropbox(song.shortUrl, dropboxPath, req);
-  //   });
-
-  //   // Wait for all uploads to complete
-  //   await Promise.all(promises);
-
-  //   console.log(2727, playlistInfo);
-  //   // Save in db
-  //   res.status(200).json({ message: "Success", playlistInfo });
-  // } catch (err) {
-  //   console.error("Error processing playlist:", err);
-  //   res.status(500).json({ message: "Error processing playlist", error: err });
-  // }
 };
 
 // Dummy function to add a song to a playlist

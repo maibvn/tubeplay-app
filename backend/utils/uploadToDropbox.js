@@ -1,132 +1,124 @@
 const ytdl = require("@distube/ytdl-core");
 
-// exports.uploadToDropbox = async (url, dropboxPath, req) => {
-//   const dbx = req.dbx;
-//   // Extract the file name from the dropboxPath
-//   const fileName = dropboxPath.split("/").pop();
-
-//   try {
-//     // List files in the folder to check for existence
-//     const folderPath = dropboxPath.substring(0, dropboxPath.lastIndexOf("/")); // Get the folder path
-//     const response = await dbx.filesListFolder({ path: folderPath });
-
-//     // Check if any file has the same name
-//     const fileExists = response.result.entries.some(
-//       (entry) => entry.name === fileName
-//     );
-
-//     if (fileExists) {
-//       // console.log(
-//       //   `File with the name ${fileName} already exists. Upload canceled.`
-//       // );
-//       return; // Cancel the upload
-//     }
-//   } catch (error) {
-//     console.error("Error checking existing files:", error);
-//     return; // Optionally handle the error
-//   }
-
-//   return new Promise((resolve, reject) => {
-//     const ytdlStream = ytdl(url, { filter: "audioonly" });
-
-//     const chunks = [];
-//     ytdlStream.on("data", (chunk) => {
-//       chunks.push(chunk); // Collect chunks of data
-//     });
-
-//     ytdlStream.on("end", async () => {
-//       const buffer = Buffer.concat(chunks); // Concatenate the chunks into a single buffer
-
-//       try {
-//         // Upload the buffer to Dropbox
-//         const response = await dbx.filesUpload({
-//           path: dropboxPath,
-//           contents: buffer,
-//           mode: { ".tag": "add" },
-//         });
-//         console.log(`File uploaded to Dropbox at: ${dropboxPath}`);
-//         resolve(response);
-//       } catch (error) {
-//         console.error("Error uploading to Dropbox:", error);
-//         reject(error);
-//       }
-//     });
-
-//     ytdlStream.on("error", (err) => {
-//       console.error("Error downloading audio:", err);
-//       reject(err);
-//     });
-//   });
-// };
-exports.uploadToDropbox = async (url, dropboxPath, req) => {
+exports.uploadToDropbox = async (songs, req) => {
   const dbx = req.dbx;
-  const fileName = dropboxPath.split("/").pop();
 
-  try {
-    // List files in the folder to check for existence
-    const folderPath = dropboxPath.substring(0, dropboxPath.lastIndexOf("/"));
-    const response = await dbx.filesListFolder({ path: folderPath });
+  const uploadMultipleSongs = async (url, dropboxPath, thumbnail) => {
+    const fileName = dropboxPath.split("/").pop();
 
-    // Check if any file has the same name
-    const fileExists = response.result.entries.some(
-      (entry) => entry.name === fileName
-    );
+    try {
+      // List files in the folder to check for existence
+      const folderPath = dropboxPath.substring(0, dropboxPath.lastIndexOf("/"));
+      const response = await dbx.filesListFolder({ path: folderPath });
 
-    if (fileExists) {
-      // Get a temporary link for the existing file
-      const existingFilePath = `${folderPath}/${fileName}`;
-      const linkResponse = await dbx.filesGetTemporaryLink({
-        path: existingFilePath.toLowerCase(), // Convert to lowercase to match Dropbox path format
+      // Check if any file has the same name
+      const fileExists = response.result.entries.some(
+        (entry) => entry.name === fileName
+      );
+
+      if (fileExists) {
+        console.log(`${fileName} already exists.`);
+
+        try {
+          // Try to retrieve the existing shared link (if it exists)
+          const sharedLinkListResponse = await dbx.sharingListSharedLinks({
+            path: `${folderPath}/${fileName}`,
+            direct_only: true, // Ensures we only get direct links, not folder links
+          });
+
+          if (sharedLinkListResponse.result.links.length > 0) {
+            // Return the first existing shared link
+            const existingLink = sharedLinkListResponse.result.links[0].url;
+            return {
+              title: fileName,
+              ytUrl: url,
+              dropboxUrl: existingLink.replace("?dl=0", "?dl=1"), // Ensure it's a direct download link
+              thumbnail: thumbnail,
+            };
+          }
+
+          // If no shared link exists, create a new one
+          const sharedLinkResponse =
+            await dbx.sharingCreateSharedLinkWithSettings({
+              path: `${folderPath}/${fileName}`,
+            });
+
+          // Return the new permanent shared link
+          return {
+            title: fileName,
+            ytUrl: url,
+            dropboxUrl: sharedLinkResponse.result.url.replace("?dl=0", "?dl=1"),
+            thumbnail: thumbnail,
+          };
+        } catch (error) {
+          console.error("Error fetching or creating shared link:", error);
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking existing files:", error);
+      return;
+    }
+
+    return new Promise((resolve, reject) => {
+      const ytdlStream = ytdl(url, { filter: "audioonly" });
+      const chunks = [];
+
+      ytdlStream.on("data", (chunk) => {
+        chunks.push(chunk); // Collect chunks of data
       });
 
-      // Return the existing streaming link
-      console.log(
-        // `File with the name ${fileName} already exists.`,
-        linkResponse.result
+      ytdlStream.on("end", async () => {
+        const buffer = Buffer.concat(chunks); // Concatenate the chunks into a single buffer
+
+        try {
+          // Upload the buffer to Dropbox
+          const uploadResponse = await dbx.filesUpload({
+            path: dropboxPath,
+            contents: buffer,
+            mode: { ".tag": "add" },
+          });
+
+          console.log(`File uploaded to Dropbox at: ${dropboxPath}`);
+
+          // Create a shared link for the newly uploaded file
+          const sharedLinkResponse =
+            await dbx.sharingCreateSharedLinkWithSettings({
+              path: uploadResponse.result.path_lower,
+            });
+
+          // Return the shared link
+          resolve({
+            title: fileName,
+            ytUrl: url,
+            dropboxUrl: sharedLinkResponse.result.url.replace("?dl=0", "?dl=1"),
+            thumbnail: thumbnail,
+          });
+        } catch (error) {
+          console.error("Error uploading to Dropbox:", error);
+          reject(error);
+        }
+      });
+
+      ytdlStream.on("error", (err) => {
+        console.error("Error downloading audio:", err);
+        reject(err);
+      });
+    });
+  };
+
+  // Loop through each song and upload it, collecting the result in an array
+  const songUploads = await Promise.all(
+    songs.map(async (song) => {
+      const dropboxPath = `/registerdUsers/${song.title}.mp3`;
+      const result = await uploadMultipleSongs(
+        song.ytUrl,
+        dropboxPath,
+        song.bestThumbnail
       );
-      return linkResponse.result.link;
-    }
-  } catch (error) {
-    console.error("Error checking existing files:", error);
-    return; // Optionally handle the error
-  }
+      return result;
+    })
+  );
 
-  return new Promise((resolve, reject) => {
-    const ytdlStream = ytdl(url, { filter: "audioonly" });
-    const chunks = [];
-
-    ytdlStream.on("data", (chunk) => {
-      chunks.push(chunk); // Collect chunks of data
-    });
-
-    ytdlStream.on("end", async () => {
-      const buffer = Buffer.concat(chunks); // Concatenate the chunks into a single buffer
-
-      try {
-        // Upload the buffer to Dropbox
-        const uploadResponse = await dbx.filesUpload({
-          path: dropboxPath,
-          contents: buffer,
-          mode: { ".tag": "add" },
-        });
-
-        console.log(`File uploaded to Dropbox at: ${dropboxPath}`);
-
-        // Get a temporary link for the uploaded file
-        const linkResponse = await dbx.filesGetTemporaryLink({
-          path: uploadResponse.result.path_lower,
-        });
-        console.log(111, linkResponse);
-        resolve(linkResponse.result.link); // Return the temporary link
-      } catch (error) {
-        console.error("Error uploading to Dropbox:", error);
-        reject(error);
-      }
-    });
-
-    ytdlStream.on("error", (err) => {
-      console.error("Error downloading audio:", err);
-      reject(err);
-    });
-  });
+  return songUploads;
 };

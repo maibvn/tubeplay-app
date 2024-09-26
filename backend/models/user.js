@@ -9,18 +9,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  playlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Playlist" }], // References Playlist
   updatedAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-// Middleware to update the `updatedAt` field on save
-userSchema.pre("save", function (next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-const User = mongoose.model("User", userSchema);
+// Check if the model is already compiled to avoid overwriting
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 module.exports = User;

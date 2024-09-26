@@ -37,7 +37,7 @@ function App() {
           // window.location.href = res.status === 200 ? "/" : "/login";
         })
         .catch((err) => {
-          // localStorage.removeItem("tubeplay-token");
+          localStorage.removeItem("tubeplay-token");
           console.error("Error verifying token:", err);
         });
     } else {

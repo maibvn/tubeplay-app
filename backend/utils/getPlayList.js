@@ -7,7 +7,7 @@ exports.getPlaylistUrl = async function (playlistUrl) {
     const songs = playlist.items.map((item) => {
       return {
         title: item.title,
-        shortUrl: item.shortUrl,
+        ytUrl: item.shortUrl,
         bestThumbnail: item.bestThumbnail,
       };
     });
