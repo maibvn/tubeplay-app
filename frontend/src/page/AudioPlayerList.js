@@ -69,23 +69,26 @@ const AudioPlayerList = () => {
   }
   // console.log(dummy_files);
   return (
-    <div>
+    <div className="text-center text-white bg-dark">
       <h1>Audio Playlist</h1>
       {dummy_files.length === 0 && isLoading ? (
         <p>No audio files found</p>
       ) : (
-        <ul>
-          {files.map((file, index) => (
-            <li key={file.name}>
-              <h3>{file.name}</h3>
-              <audio controls autoPlay={index === 0}>
-                <source src={file.streamingUrl} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-              {/* <WaveForm audioUrl={audioUrl} /> */}
-            </li>
-          ))}
-          {/* {dummy_files.map((file, index) => (
+        <div className="container-fluid d-flex justify-content-center">
+          <div className="row">
+            <h1 className=" col text-center text-size-lg">Image Ipod</h1>
+            <ul className="col">
+              {files.map((file, index) => (
+                <li key={file.name} className="list-group-item p-4">
+                  <h3>{file.name}</h3>
+                  <audio controls autoPlay={index === 0}>
+                    <source src={file.streamingUrl} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                  {/* <WaveForm audioUrl={audioUrl} /> */}
+                </li>
+              ))}
+              {/* {dummy_files.map((file, index) => (
             <li key={file}>
               <h3>{file.name}</h3>
               <audio controls autoPlay={index === 0}>
@@ -94,7 +97,9 @@ const AudioPlayerList = () => {
               </audio>
             </li>
           ))} */}
-        </ul>
+            </ul>
+          </div>
+        </div>
       )}
     </div>
   );
