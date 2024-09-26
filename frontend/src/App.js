@@ -27,7 +27,7 @@ function App() {
   useEffect(() => {
     if (token) {
       axios
-        .get(`${process.env.REACT_APP_API_DOMAIN}/api/auth/verify-token`, {
+        .get(`${process.env.REACT_APP_API_DOMAIN}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
@@ -37,7 +37,7 @@ function App() {
           // window.location.href = res.status === 200 ? "/" : "/login";
         })
         .catch((err) => {
-          localStorage.removeItem("tubeplay-token");
+          // localStorage.removeItem("tubeplay-token");
           console.error("Error verifying token:", err);
         });
     } else {

@@ -5,6 +5,8 @@ const connectDB = require("./utils/connectDB");
 const initializeDropbox = require("./utils/refreshAccessToken");
 const authRouter = require("./routes/auth");
 const playlistRouter = require("./routes/playlist");
+// const userRouter = require("./routes/user");
+const { authenticateToken } = require("./middleware/authenticateToken");
 
 // DATABASE
 connectDB();
@@ -32,9 +34,11 @@ const dbxMiddleware = async (req, res, next) => {
 
 app.use(dbxMiddleware);
 
+// app.use(authenticateToken);
+
 // ROUTES
 app.use("/api/auth", authRouter); // Authentication routes
-app.use("/api/playlist", playlistRouter); // Playlist management
+app.use("/api/playlist", authenticateToken, playlistRouter); // Playlist management
 
 app.listen(port, () => {
   console.log("Server is running on port 5000");

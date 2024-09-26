@@ -13,6 +13,6 @@ router.post("/signup", signupUser);
 router.post("/login", loginUser);
 
 // authenticateToken
-router.get("/verify-token", authenticateToken);
+// router.get("/verify-token", authenticateToken);
 
 module.exports = router;

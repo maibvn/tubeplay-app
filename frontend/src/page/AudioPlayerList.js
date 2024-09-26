@@ -38,12 +38,15 @@ const AudioPlayerList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState(null);
+
   useEffect(() => {
+    const token = JSON.parse(localStorage.getItem("tubeplay-token"));
     // Fetch the list of MP3 files from the backend
     const fetchFiles = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_API_DOMAIN}/api/playlist/songs`
+          `${process.env.REACT_APP_API_DOMAIN}/api/playlist/songs`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -51,7 +54,7 @@ const AudioPlayerList = () => {
         const data = await response.json();
 
         setFiles(data);
-        console.log(data);
+        // console.log(data);
         setIsLoading(false);
       } catch (error) {
         setError(error.message);

@@ -2,31 +2,64 @@ const { getPlaylistUrl } = require("../utils/getPlayList");
 const { uploadToDropbox } = require("../utils/uploadToDropbox");
 
 // Dummy function to get playlists
-exports.getPlaylist = (req, res) => {
-  // Call this function with the authorization code you got from Dropbox
+exports.getPlaylist = async (req, res) => {
   const playlistUrl = req.query.plUrl;
+  // Dropbox folder
+  let path = "temp";
+  // console.log(8888, "check user in getting playlist", req.user);
+  if (req.user) {
+    // Check playlist user has, auto generate
+    path = "registerdUsers";
+  }
+  try {
+    const { playlistInfo } = await getPlaylistUrl(playlistUrl);
+    const songs = playlistInfo.songs;
 
-  getPlaylistUrl(playlistUrl)
-    .then(({ urls, songInfo }) => {
-      const promises = urls.map((url, i) => {
-        const dropboxPath = `/test/${songInfo[i].title.replace(
-          /\s+/g,
-          ""
-        )}.mp3`;
-        // Upload Audio
-        return uploadToDropbox(url, dropboxPath, req);
-      });
-      return Promise.all(promises);
-    })
-    .then(() => {
-      res.status(200).json({ message: "Success" });
-    })
-    .catch((err) => {
-      console.error("Error processing playlist:", err);
-      res
-        .status(500)
-        .json({ message: "Error processing playlist", error: err });
+    const promises = songs.map(async (song) => {
+      const dropboxPath = `/${path}/${song.title}.mp3`;
+      // Upload Audio and get the streaming link
+      const streamingLink = await uploadToDropbox(
+        song.shortUrl,
+        dropboxPath,
+        req
+      );
+      return {
+        title: song.title,
+        streamingLink: streamingLink,
+      };
     });
+
+    // Wait for all uploads to complete and collect streaming links
+    const songLinks = await Promise.all(promises);
+
+    // console.log(songLinks);
+    res
+      .status(200)
+      .json({ message: "Success", playlistInfo, songs: songLinks });
+  } catch (err) {
+    console.error("Error processing playlist:", err);
+    res.status(500).json({ message: "Error processing playlist", error: err });
+  }
+  // try {
+  //   const { playlistInfo } = await getPlaylistUrl(playlistUrl);
+  //   const songs = playlistInfo.songs;
+
+  //   const promises = songs.map(async (song) => {
+  //     const dropboxPath = `/${path}/${song.title}.mp3`;
+  //     // Upload Audio
+  //     await uploadToDropbox(song.shortUrl, dropboxPath, req);
+  //   });
+
+  //   // Wait for all uploads to complete
+  //   await Promise.all(promises);
+
+  //   console.log(2727, playlistInfo);
+  //   // Save in db
+  //   res.status(200).json({ message: "Success", playlistInfo });
+  // } catch (err) {
+  //   console.error("Error processing playlist:", err);
+  //   res.status(500).json({ message: "Error processing playlist", error: err });
+  // }
 };
 
 // Dummy function to add a song to a playlist
