@@ -34,6 +34,7 @@ function App() {
             `${process.env.REACT_APP_API_DOMAIN}/api/playlist`,
             {
               headers: { Authorization: `Bearer ${token}` },
+              withCredentials: true, // Properly include this within the options object
             }
           );
           // Check if token is expired (401)

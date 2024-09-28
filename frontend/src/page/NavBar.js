@@ -19,6 +19,26 @@ function NavBar({ isLogin, setIsLogin, user }) {
         console.error("Error verifying token:", err);
       });
   };
+  const logoutHandler = () => {
+    setIsLogin(false);
+    localStorage.removeItem("userInfo");
+    localStorage.removeItem("tubeplay-token");
+
+    const handleLogout = async () => {
+      try {
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_DOMAIN}/api/auth/logout`,
+          null,
+          { withCredentials: true }
+        );
+        navigate("/");
+        window.location.reload();
+      } catch (error) {
+        console.error("Error logging out:", error);
+      }
+    };
+    handleLogout();
+  };
   return (
     <div>
       <div className="container-fluid text-white bg-dark">
@@ -40,11 +60,7 @@ function NavBar({ isLogin, setIsLogin, user }) {
                 <div className="d-flex flex-wrap justify-content-end gap-2 ms-2">
                   <button
                     className="btn btn-danger btn-s rounded-0 text-light"
-                    onClick={() => {
-                      setIsLogin(false);
-                      localStorage.removeItem("userInfo");
-                      navigate("/");
-                    }}
+                    onClick={logoutHandler}
                   >
                     Log out
                   </button>

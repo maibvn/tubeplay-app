@@ -18,7 +18,11 @@ const AudioPlayerList = () => {
     const fetchFiles = async (url) => {
       try {
         const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
         });
         if (!response.ok) {
           throw new Error("Network response was not ok");

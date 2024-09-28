@@ -24,13 +24,17 @@ const store = new MongoDBStore({
 });
 
 app.use(express.json());
+// Session middleware
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    store: store,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 day
+    secret: process.env.SESSION_SECRET, // Replace with your session secret
+    resave: false, // Don't resave session if nothing is changed
+    saveUninitialized: false, // Don't save uninitialized sessions
+    cookie: {
+      maxAge: 1000 * 60 * 60, // 1 hour session lifetime
+      secure: false, // Set to true if you're using HTTPS
+      httpOnly: true, // Prevents JavaScript access to cookies
+    },
   })
 );
 

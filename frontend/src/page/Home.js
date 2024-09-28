@@ -20,9 +20,14 @@ function Home() {
     setIsLoading(true);
     const apiUrl = `${process.env.REACT_APP_API_DOMAIN}/api/playlist/generate/?plUrl=${link}`;
     const token = JSON.parse(localStorage.getItem("tubeplay-token"));
+
     try {
       const response = await fetch(apiUrl, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
       });
       if (!response.ok) {
         throw new Error("Network response was not ok");

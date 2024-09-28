@@ -5,10 +5,7 @@ const Playlist = require("../models/playlist");
 const { v4: uuidv4 } = require("uuid");
 
 // Helper to handle user playlist logic
-const handleUserPlaylist = async (user, playlistInfo) => {
-  if (!user) return null;
-
-  const userEmail = user.email;
+const handleUserPlaylist = async (playlistInfo) => {
   const existingPlaylist = await Playlist.findOne({
     plUrl: playlistInfo.plUrl,
   });
@@ -22,11 +19,43 @@ const handleUserPlaylist = async (user, playlistInfo) => {
   });
 
   await newPlaylist.save();
-  user.playlists.push(newPlaylist._id);
-  await user.save();
 
   return newPlaylist._id;
 };
+
+// const handleUserPlaylist = async (user, playlistInfo) => {
+//   console.log(99, user);
+//   if (!user) return null;
+
+//   const userEmail = user.email;
+//   const existingPlaylist = await Playlist.findOne({
+//     plUrl: playlistInfo.plUrl,
+//   });
+
+//   // If an existing playlist is found, add its ID to the user's playlist reference if it's not already there
+//   if (existingPlaylist) {
+//     if (!user.playlists.includes(existingPlaylist._id)) {
+//       user.playlists.push(existingPlaylist._id);
+//       await user.save(); // Save the user with the updated playlist array
+//     }
+//     return existingPlaylist._id;
+//   }
+
+//   // Create a new playlist if none exists
+//   const newPlaylist = new Playlist({
+//     plTitle: playlistInfo.plTitle,
+//     plUrl: playlistInfo.plUrl,
+//     plSongNum: playlistInfo.plSongNum,
+//     songs: playlistInfo.songs,
+//   });
+
+//   // Save the new playlist and add its ID to the user's playlists array
+//   await newPlaylist.save();
+//   user.playlists.push(newPlaylist._id);
+//   await user.save(); // Save the updated user with the new playlist ID
+
+//   return newPlaylist._id;
+// };
 
 // Helper to clean song titles
 const cleanSongTitles = (songs, uniqueId) => {
@@ -53,31 +82,57 @@ exports.checkAuth = (req, res) => {
 };
 
 exports.generatePlaylist = async (req, res, next) => {
+  // Check for the playlist URL in the request
   const playlistUrl = req.query.plUrl;
   if (!playlistUrl) {
     return res.status(400).json({
       message: "Bad Request: playlistUrl is required",
-      userEmail: req.user?.email || null,
+      userEmail: req.user?.email || req.session?.user?.email || null,
     });
   }
 
-  const uniqueId = req.user ? null : "123";
+  // Generate unique ID for unregistered users (no req.user or req.session.user)
+  const uniqueId = req.user || req.session.user ? null : "123";
 
   try {
+    // Fetch playlist information from the provided URL
     const { playlistInfo } = await getPlaylistUrl(playlistUrl);
+
+    // Upload songs to Dropbox
     const results = await uploadToDropbox(playlistInfo.songs, uniqueId, req);
 
+    // Update the Dropbox URLs for each song
     const updatedSongs = results.map((song) => ({
       ...song,
       dropboxUrl: song.dropboxUrl.replace(/dl=0$/, "dl=1"),
     }));
     playlistInfo.songs = updatedSongs;
 
-    let playlistId = await handleUserPlaylist(req.user, playlistInfo);
+    // Handle playlist creation or lookup for authenticated users
+    let user = req.user || req.session.user; // Check both JWT and session for the user
+    let playlistId = null;
 
+    if (user) {
+      playlistId = await handleUserPlaylist(playlistInfo);
+      // Find the user by their ID
+      const userDb = await User.findById(user.id);
+
+      if (!userDb) {
+        console.error("User not found");
+        return null; // Or handle the error as needed
+      }
+      // Only push the new playlist ID if it's not already in the user's playlists
+      if (!userDb.playlists.includes(playlistId)) {
+        userDb.playlists.push(playlistId);
+        await userDb.save(); // Save the updated user
+      }
+    }
+
+    // Clean song titles (remove prefixes, etc.)
     const cleanedSongs = cleanSongTitles(playlistInfo.songs, uniqueId);
     playlistInfo.songs = cleanedSongs;
 
+    // Respond with the playlist data
     res.status(200).json({
       playlistId,
       playlistInfo,
@@ -88,6 +143,43 @@ exports.generatePlaylist = async (req, res, next) => {
     res.status(500).json({ message: "Error processing playlist", error: err });
   }
 };
+
+// exports.generatePlaylist = async (req, res, next) => {
+//   const playlistUrl = req.query.plUrl;
+//   if (!playlistUrl) {
+//     return res.status(400).json({
+//       message: "Bad Request: playlistUrl is required",
+//       userEmail: req.user?.email || null,
+//     });
+//   }
+
+//   const uniqueId = req.user ? null : "123";
+
+//   try {
+//     const { playlistInfo } = await getPlaylistUrl(playlistUrl);
+//     const results = await uploadToDropbox(playlistInfo.songs, uniqueId, req);
+
+//     const updatedSongs = results.map((song) => ({
+//       ...song,
+//       dropboxUrl: song.dropboxUrl.replace(/dl=0$/, "dl=1"),
+//     }));
+//     playlistInfo.songs = updatedSongs;
+
+//     let playlistId = await handleUserPlaylist(req.user, playlistInfo);
+
+//     const cleanedSongs = cleanSongTitles(playlistInfo.songs, uniqueId);
+//     playlistInfo.songs = cleanedSongs;
+
+//     res.status(200).json({
+//       playlistId,
+//       playlistInfo,
+//       nonRegisterUserId: uniqueId,
+//     });
+//   } catch (err) {
+//     console.error("Error processing playlist:", err);
+//     res.status(500).json({ message: "Error processing playlist", error: err });
+//   }
+// };
 
 // exports.generatePlaylist = async (req, res, next) => {
 //   const playlistUrl = req.query.plUrl;
@@ -178,13 +270,47 @@ exports.generatePlaylist = async (req, res, next) => {
 //   }
 // };
 
+// exports.getSinglePlaylist = async (req, res) => {
+//   console.log(234, "ge a  playlist", req.session.user);
+//   const dbx = req.dbx;
+//   if (!req.user) {
+//     return res
+//       .status(401)
+//       .json({ message: "Unauthorized: User not authenticated" });
+//   }
+//   const { playlistId } = req.params;
+//   try {
+//     // Find the playlist by its ID
+//     const playlist = await Playlist.findById(playlistId);
+
+//     if (!playlist) {
+//       return res.status(404).json({ message: "Playlist not found" });
+//     }
+//     const cleanedTitleSongs = playlist.songs.map((s) =>
+//       s.title.replace(/\.mp3$/, "")
+//     );
+//     playlist.songs = playlist.songs.map((s, i) => ({
+//       ...s,
+//       title: cleanedTitleSongs[i],
+//     }));
+
+//     res.status(200).json(playlist);
+//   } catch (error) {
+//     console.error("Error fetching playlist:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
 exports.getSinglePlaylist = async (req, res) => {
-  const dbx = req.dbx;
-  if (!req.user) {
+  // Check for authentication via session or JWT
+  const authenticatedUser = req.user || req.session.user;
+
+  if (!authenticatedUser) {
     return res
       .status(401)
       .json({ message: "Unauthorized: User not authenticated" });
   }
+
   const { playlistId } = req.params;
   try {
     // Find the playlist by its ID
@@ -193,14 +319,18 @@ exports.getSinglePlaylist = async (req, res) => {
     if (!playlist) {
       return res.status(404).json({ message: "Playlist not found" });
     }
+
+    // Clean song titles by removing ".mp3" suffix
     const cleanedTitleSongs = playlist.songs.map((s) =>
       s.title.replace(/\.mp3$/, "")
     );
+
     playlist.songs = playlist.songs.map((s, i) => ({
       ...s,
       title: cleanedTitleSongs[i],
     }));
 
+    // Return the playlist
     res.status(200).json(playlist);
   } catch (error) {
     console.error("Error fetching playlist:", error);

@@ -56,3 +56,19 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ error: "Error logging in" });
   }
 };
+
+// Logout user
+exports.logoutUser = async (req, res) => {
+  if (req.session.user) {
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+        return res.status(500).json({ message: "Error logging out" });
+      }
+      res.status(200).json({ message: "Logged out successfully" });
+    });
+  } else {
+    res.status(200).json({ message: "No active session to log out" });
+  }
+};

@@ -30,10 +30,8 @@ function Login({ setIsLogin, setUser }) {
     // Saving token for next signin in
     if (data.token) {
       localStorage.setItem("tubeplay-token", JSON.stringify(data.token));
-
-      // localStorage.removeItem("nonRegisterUserId");
-      //  window.location.href =
       navigate("/");
+      window.location.reload();
     }
     if (!res.ok) {
       throw new Error("Could not login!");
@@ -60,8 +58,8 @@ function Login({ setIsLogin, setUser }) {
         { token: response.credential },
         { withCredentials: true } // Include credentials for session
       );
-
-      // navigate("/");
+      navigate("/");
+      window.location.reload();
     } catch (err) {
       console.error("Error authenticating user:", err);
     }
