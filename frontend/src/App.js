@@ -1,11 +1,17 @@
 import React from "react";
 import AudioPlayerList from "./page/AudioPlayerList";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  useNavigationType,
+} from "react-router-dom";
 import { useState, useEffect } from "react";
+// import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Login from "./page/Login";
 import SignUp from "./page/SignUp";
-
 import Home from "./page/Home";
 import NavBar from "./page/NavBar";
 
@@ -14,28 +20,42 @@ function App() {
   const [isLogin, setIsLogin] = useState(false);
   const [user, setUser] = useState({});
   // const [validToken, setValidToken] = useState(false);
-
+  // const location = useLocation();
   const token = JSON.parse(localStorage.getItem("tubeplay-token"));
 
+  // const navigationType = useNavigationType();
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
     const fetchUser = async () => {
       if (token) {
-        axios
-          .get(`${process.env.REACT_APP_API_DOMAIN}/api/playlist`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => {
-            const userEmail = res.data.email;
-            setUser({ email: userEmail });
-            setIsLogin(true);
-          })
-          .catch((err) => {
+        try {
+          const res = await axios.get(
+            `${process.env.REACT_APP_API_DOMAIN}/api/playlist`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          // Check if token is expired (401)
+          if (res.status === 401) {
+            alert("Token has expired. Please sign in again.");
+            return;
+          }
+          const userEmail = res.data.email;
+          setUser({ email: userEmail });
+          setIsLogin(true);
+        } catch (err) {
+          // If the response error has a status, handle it accordingly
+          if (err.response && err.response.status === 401) {
+            console.error("Token has expired!");
+            localStorage.removeItem("tubeplay-token");
+          } else {
             console.error("Error verifying token:", err);
-          });
+          }
+        }
       }
     };
+
     if (userInfo) {
       setIsLogin(userInfo.isLogin);
       setUser(userInfo.user);

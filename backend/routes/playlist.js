@@ -2,15 +2,15 @@ const express = require("express");
 const router = express.Router();
 const playlistController = require("../controllers/playlist");
 
-// Route to get playlists
+// Route to generate a playlist
 router.get("/generate", playlistController.generatePlaylist);
 
 router.get("/playlists", playlistController.getAllPlaylists);
 
-// Route to add a song to a playlist
+// Route to handle playlist for nonres users
 router.get("/temp/:unregUserId", playlistController.getTempSongs);
 
-// Route to add a song to a playlist
+// Route to get a playlist
 router.get("/:playlistId", playlistController.getSinglePlaylist);
 
 router.get("/", playlistController.checkAuth);

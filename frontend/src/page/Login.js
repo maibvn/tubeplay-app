@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
 
 function Login({ setIsLogin, setUser }) {
   const navigate = useNavigate();
@@ -30,7 +32,7 @@ function Login({ setIsLogin, setUser }) {
       localStorage.setItem("tubeplay-token", JSON.stringify(data.token));
 
       // localStorage.removeItem("nonRegisterUserId");
-
+      //  window.location.href =
       navigate("/");
     }
     if (!res.ok) {
@@ -48,7 +50,26 @@ function Login({ setIsLogin, setUser }) {
       alert("Please enter all fields!");
     }
   };
+  // Log in with Google
+  const handleLoginSuccess = async (response) => {
+    try {
+      // Send the token to the backend for verification and authentication
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_DOMAIN}/api/auth/google`,
+        {
+          token: response.credential,
+        }
+      );
+      console.log(res.data.user);
+      // navigate("/");
+    } catch (err) {
+      console.error("Error authenticating user:", err);
+    }
+  };
 
+  const handleLoginFailure = (error) => {
+    console.error("Login Failed:", error);
+  };
   useEffect(() => {
     if (response.isAuthenticated) {
       setIsLogin(true);
@@ -102,6 +123,16 @@ function Login({ setIsLogin, setUser }) {
           Log in
         </button>
       </form>
+      <br />
+      <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+        <div>
+          <GoogleLogin
+            onSuccess={handleLoginSuccess}
+            onFailure={handleLoginFailure}
+            cookiePolicy="single_host_origin"
+          />
+        </div>
+      </GoogleOAuthProvider>
     </div>
   );
 }

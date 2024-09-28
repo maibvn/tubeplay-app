@@ -26,7 +26,6 @@ const AudioPlayerList = () => {
         const data = await response.json();
 
         setPlaylist(data);
-        // console.log(data);
         setIsLoading(false);
       } catch (error) {
         setError(error.message);

@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User"); // Assuming you have a User model
+const User = require("../models/user");
 
 // Register a new user
 exports.signupUser = async (req, res) => {
@@ -34,6 +34,7 @@ exports.loginUser = async (req, res) => {
   try {
     // Find user by email
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(400).json({ error: "Invalid credentials" });
     }

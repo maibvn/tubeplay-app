@@ -17,11 +17,13 @@ const authenticateToken = async (req, res, next) => {
 
     // Fetch user information from the database
     const user = await User.findById(decoded.id);
+
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
     // Attach user information to the request object
+    // console.log(updatedUser);
     req.user = user;
     // Proceed to the next middleware or route
     next();

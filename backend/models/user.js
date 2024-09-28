@@ -4,10 +4,19 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
+    // unique: true,
   },
   password: {
     type: String,
     required: true,
+  },
+  name: {
+    type: String,
+    // required: true,
+  },
+  googleId: {
+    type: String,
+    // required: true,
   },
   playlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Playlist" }], // References Playlist
   updatedAt: {
@@ -17,6 +26,6 @@ const userSchema = new mongoose.Schema({
 });
 
 // Check if the model is already compiled to avoid overwriting
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;
