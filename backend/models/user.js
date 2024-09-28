@@ -6,17 +6,21 @@ const userSchema = new mongoose.Schema({
     required: true,
     // unique: true,
   },
-  password: {
-    type: String,
-    required: true,
-  },
   name: {
     type: String,
     // required: true,
   },
-  googleId: {
+  password: {
     type: String,
-    // required: true,
+    required: function () {
+      // Password is required only if the user is not using Google Auth
+      return !this.googleId;
+    },
+  },
+  googleId: {
+    type: String, // For users authenticated via Google
+    unique: true,
+    sparse: true, // Allows this field to be optional
   },
   playlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Playlist" }], // References Playlist
   updatedAt: {

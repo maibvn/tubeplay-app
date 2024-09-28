@@ -62,6 +62,25 @@ function App() {
     } else {
       fetchUser();
     }
+
+    // Check session for google acc auto login
+    const checkSession = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_DOMAIN}/api/auth/session`,
+          { withCredentials: true }
+        );
+
+        if (res.data.user) {
+          setUser(res.data.user);
+          setIsLogin(true);
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+      }
+    };
+
+    checkSession();
   }, []);
 
   return (

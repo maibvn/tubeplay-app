@@ -56,11 +56,11 @@ function Login({ setIsLogin, setUser }) {
       // Send the token to the backend for verification and authentication
       const res = await axios.post(
         `${process.env.REACT_APP_API_DOMAIN}/api/auth/google`,
-        {
-          token: response.credential,
-        }
+
+        { token: response.credential },
+        { withCredentials: true } // Include credentials for session
       );
-      console.log(res.data.user);
+
       // navigate("/");
     } catch (err) {
       console.error("Error authenticating user:", err);

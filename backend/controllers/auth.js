@@ -56,32 +56,3 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ error: "Error logging in" });
   }
 };
-
-// Middleware to get user info from token
-// exports.authenticateToken = async (req, res) => {
-//   const token = req.headers["authorization"]?.split(" ")[1];
-
-//   if (!token) {
-//     return res.status(401).json({ error: "No token provided" });
-//   }
-
-//   try {
-//     // return;
-//     // Verify and decode the token
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     // Fetch user information from the database
-//     const user = await User.findById(decoded.id); // Assuming the user ID is in the token
-
-//     const userEmail = user.email;
-//     if (!user) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
-
-//     req.user = user;
-
-//     res.json({ userEmail }); // Send user information back
-//   } catch (error) {
-//     console.error("Error verifying token:", error);
-//     res.status(403).json({ error: "Invalid token" });
-//   }
-// };

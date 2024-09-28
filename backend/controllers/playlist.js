@@ -39,7 +39,7 @@ const cleanSongTitles = (songs, uniqueId) => {
 };
 
 exports.checkAuth = (req, res) => {
-  // console.log("checking auth", req.user);
+  // console.log("checking auth", req.session);
   // Check if user is authenticated
   if (!req.user) {
     return res
