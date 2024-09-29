@@ -28,31 +28,31 @@ function App() {
     const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
     const fetchUser = async () => {
-      if (token) {
-        try {
-          const res = await axios.get(
-            `${process.env.REACT_APP_API_DOMAIN}/api/playlist`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-              withCredentials: true, // Properly include this within the options object
-            }
-          );
-          // Check if token is expired (401)
-          if (res.status === 401) {
-            alert("Token has expired. Please sign in again.");
-            return;
+      try {
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_DOMAIN}/api/auth/checkauth`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true, // Properly include this within the options object
           }
+        );
+        if (res.data.mode === "token") {
           const userEmail = res.data.email;
           setUser({ email: userEmail });
           setIsLogin(true);
-        } catch (err) {
-          // If the response error has a status, handle it accordingly
-          if (err.response && err.response.status === 401) {
-            console.error("Token has expired!");
-            localStorage.removeItem("tubeplay-token");
-          } else {
-            console.error("Error verifying token:", err);
-          }
+        } else if (res.data.mode === "session") {
+          setUser(res.data.user);
+          setIsLogin(true);
+        }
+      } catch (err) {
+        // If the response error has a status, handle it accordingly
+        if (err.response && err.response.status === 401) {
+          console.error(
+            "Unauthorized: User not authenticated. Please try again!"
+          );
+          // localStorage.removeItem("tubeplay-token");
+        } else {
+          console.error("Error verifying token:", err);
         }
       }
     };
@@ -65,23 +65,26 @@ function App() {
     }
 
     // Check session for google acc auto login
-    const checkSession = async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_DOMAIN}/api/auth/session`,
-          { withCredentials: true }
-        );
+    // const checkAuth = async () => {
+    //   try {
+    //     const res = await axios.get(
+    //       `${process.env.REACT_APP_API_DOMAIN}/api/auth/checkauth`,
+    //       {
+    //         headers: { Authorization: `Bearer ${token}` },
+    //         withCredentials: true, // Properly include this within the options object
+    //       }
+    //     );
 
-        if (res.data.user) {
-          setUser(res.data.user);
-          setIsLogin(true);
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-      }
-    };
+    //     if (res.data.user) {
+    //       setUser(res.data.user);
+    //       setIsLogin(true);
+    //     }
+    //   } catch (error) {
+    //     console.error("Session check error:", error);
+    //   }
+    // };
 
-    checkSession();
+    // checkAuth();
   }, []);
 
   return (

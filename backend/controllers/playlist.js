@@ -3,6 +3,7 @@ const { uploadToDropbox } = require("../utils/uploadToDropbox");
 const User = require("../models/user");
 const Playlist = require("../models/playlist");
 const { v4: uuidv4 } = require("uuid");
+const { cleanSongTitles } = require("../utils/cleanSongTitles");
 
 // Helper to handle user playlist logic
 const handleUserPlaylist = async (playlistInfo) => {
@@ -22,64 +23,28 @@ const handleUserPlaylist = async (playlistInfo) => {
 
   return newPlaylist._id;
 };
-
-// const handleUserPlaylist = async (user, playlistInfo) => {
-//   console.log(99, user);
-//   if (!user) return null;
-
-//   const userEmail = user.email;
-//   const existingPlaylist = await Playlist.findOne({
-//     plUrl: playlistInfo.plUrl,
-//   });
-
-//   // If an existing playlist is found, add its ID to the user's playlist reference if it's not already there
-//   if (existingPlaylist) {
-//     if (!user.playlists.includes(existingPlaylist._id)) {
-//       user.playlists.push(existingPlaylist._id);
-//       await user.save(); // Save the user with the updated playlist array
-//     }
-//     return existingPlaylist._id;
-//   }
-
-//   // Create a new playlist if none exists
-//   const newPlaylist = new Playlist({
-//     plTitle: playlistInfo.plTitle,
-//     plUrl: playlistInfo.plUrl,
-//     plSongNum: playlistInfo.plSongNum,
-//     songs: playlistInfo.songs,
-//   });
-
-//   // Save the new playlist and add its ID to the user's playlists array
-//   await newPlaylist.save();
-//   user.playlists.push(newPlaylist._id);
-//   await user.save(); // Save the updated user with the new playlist ID
-
-//   return newPlaylist._id;
+// // Helper to clean song titles
+// const cleanSongTitles = (songs, uniqueId) => {
+//   return songs.map((s) => ({
+//     ...s,
+//     title: s.title
+//       .replace(new RegExp(`^${uniqueId}-`), "")
+//       .replace(/\.mp3$/, ""),
+//   }));
 // };
 
-// Helper to clean song titles
-const cleanSongTitles = (songs, uniqueId) => {
-  return songs.map((s) => ({
-    ...s,
-    title: s.title
-      .replace(new RegExp(`^${uniqueId}-`), "")
-      .replace(/\.mp3$/, ""),
-  }));
-};
+// exports.checkAuth = (req, res) => {
+//   // Check if user is authenticated
+//   if (!req.user) {
+//     return res
+//       .status(401)
+//       .json({ message: "Unauthorized: User not authenticated" });
+//   }
+//   // Access user email from req.userEmail or res.locals.userEmail
+//   const userEmail = req.user.email;
 
-exports.checkAuth = (req, res) => {
-  // console.log("checking auth", req.session);
-  // Check if user is authenticated
-  if (!req.user) {
-    return res
-      .status(401)
-      .json({ message: "Unauthorized: User not authenticated" });
-  }
-  // Access user email from req.userEmail or res.locals.userEmail
-  const userEmail = req.user.email;
-
-  res.status(200).json({ message: "Authenticated", email: userEmail });
-};
+//   res.status(200).json({ message: "Authenticated", email: userEmail });
+// };
 
 exports.generatePlaylist = async (req, res, next) => {
   // Check for the playlist URL in the request
@@ -143,163 +108,6 @@ exports.generatePlaylist = async (req, res, next) => {
     res.status(500).json({ message: "Error processing playlist", error: err });
   }
 };
-
-// exports.generatePlaylist = async (req, res, next) => {
-//   const playlistUrl = req.query.plUrl;
-//   if (!playlistUrl) {
-//     return res.status(400).json({
-//       message: "Bad Request: playlistUrl is required",
-//       userEmail: req.user?.email || null,
-//     });
-//   }
-
-//   const uniqueId = req.user ? null : "123";
-
-//   try {
-//     const { playlistInfo } = await getPlaylistUrl(playlistUrl);
-//     const results = await uploadToDropbox(playlistInfo.songs, uniqueId, req);
-
-//     const updatedSongs = results.map((song) => ({
-//       ...song,
-//       dropboxUrl: song.dropboxUrl.replace(/dl=0$/, "dl=1"),
-//     }));
-//     playlistInfo.songs = updatedSongs;
-
-//     let playlistId = await handleUserPlaylist(req.user, playlistInfo);
-
-//     const cleanedSongs = cleanSongTitles(playlistInfo.songs, uniqueId);
-//     playlistInfo.songs = cleanedSongs;
-
-//     res.status(200).json({
-//       playlistId,
-//       playlistInfo,
-//       nonRegisterUserId: uniqueId,
-//     });
-//   } catch (err) {
-//     console.error("Error processing playlist:", err);
-//     res.status(500).json({ message: "Error processing playlist", error: err });
-//   }
-// };
-
-// exports.generatePlaylist = async (req, res, next) => {
-//   const playlistUrl = req.query.plUrl;
-//   if (!playlistUrl) {
-//     return res.status(400).json({
-//       message: "Bad Request: playlistUrl is required",
-//       userEmail: req.user ? req.user.email : null,
-//     });
-//   }
-//   // const uniqueId = uuidv4(); // Generate a UUID
-//   let uniqueId = null;
-
-//   if (!req.user) {
-//     uniqueId = "123";
-//   }
-
-//   try {
-//     const { playlistInfo } = await getPlaylistUrl(playlistUrl);
-
-//     const songs = playlistInfo.songs;
-//     const results = await uploadToDropbox(songs, uniqueId, req);
-
-//     const updatedSongs = results.map((song) => ({
-//       ...song,
-//       dropboxUrl: song.dropboxUrl.replace(/dl=0$/, "dl=1"),
-//     }));
-
-//     playlistInfo.songs = updatedSongs;
-
-//     let playlistId = null;
-//     if (req.user) {
-//       const userEmail = req.user.email; // Email of the authenticated user
-
-//       // Find the user based on the email in req.user
-//       const user = await User.findOne({ email: userEmail });
-//       // Check if a playlist with the same plUrl already exists
-//       const existingPlaylist = await Playlist.findOne({
-//         plUrl: playlistInfo.plUrl,
-//       });
-
-//       if (existingPlaylist) {
-//         playlistId = existingPlaylist._id;
-//       } else {
-//         const newPlaylist = new Playlist({
-//           plTitle: playlistInfo.plTitle,
-//           plUrl: playlistInfo.plUrl,
-//           plSongNum: playlistInfo.plSongNum,
-//           songs: playlistInfo.songs, // Array of song objects
-//         });
-
-//         // Save the playlist to the database
-//         await newPlaylist.save();
-
-//         // Add the playlist's ObjectId to the user's playlists array
-//         user.playlists.push(newPlaylist._id);
-//         playlistId = newPlaylist._id;
-
-//         // Save the updated user
-//         await user.save();
-//       }
-//     }
-
-//     let cleanedTitleSongs;
-//     if (!req.user) {
-//       cleanedTitleSongs = playlistInfo.songs.map((s) =>
-//         s.title
-//           .replace(new RegExp(`^${uniqueId}-`), "") // Remove the prefix + suffix
-//           .replace(/\.mp3$/, "")
-//       );
-//     } else {
-//       cleanedTitleSongs = playlistInfo.songs.map((s) =>
-//         s.title.replace(/\.mp3$/, "")
-//       );
-//     }
-//     playlistInfo.songs = playlistInfo.songs.map((s, i) => ({
-//       ...s,
-//       title: cleanedTitleSongs[i],
-//     }));
-
-//     res.status(200).json({
-//       playlistId: playlistId,
-//       playlistInfo: playlistInfo,
-//       nonRegisterUserId: uniqueId,
-//     });
-//   } catch (err) {
-//     console.error("Error processing playlist:", err);
-//     res.status(500).json({ message: "Error processing playlist", error: err });
-//   }
-// };
-
-// exports.getSinglePlaylist = async (req, res) => {
-//   console.log(234, "ge a  playlist", req.session.user);
-//   const dbx = req.dbx;
-//   if (!req.user) {
-//     return res
-//       .status(401)
-//       .json({ message: "Unauthorized: User not authenticated" });
-//   }
-//   const { playlistId } = req.params;
-//   try {
-//     // Find the playlist by its ID
-//     const playlist = await Playlist.findById(playlistId);
-
-//     if (!playlist) {
-//       return res.status(404).json({ message: "Playlist not found" });
-//     }
-//     const cleanedTitleSongs = playlist.songs.map((s) =>
-//       s.title.replace(/\.mp3$/, "")
-//     );
-//     playlist.songs = playlist.songs.map((s, i) => ({
-//       ...s,
-//       title: cleanedTitleSongs[i],
-//     }));
-
-//     res.status(200).json(playlist);
-//   } catch (error) {
-//     console.error("Error fetching playlist:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
 
 exports.getSinglePlaylist = async (req, res) => {
   // Check for authentication via session or JWT

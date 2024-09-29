@@ -27,6 +27,7 @@ function Login({ setIsLogin, setUser }) {
       }
     );
     const data = await res.json();
+    console.log(data);
     // Saving token for next signin in
     if (data.token) {
       localStorage.setItem("tubeplay-token", JSON.stringify(data.token));
@@ -68,6 +69,7 @@ function Login({ setIsLogin, setUser }) {
   const handleLoginFailure = (error) => {
     console.error("Login Failed:", error);
   };
+
   useEffect(() => {
     if (response.isAuthenticated) {
       setIsLogin(true);

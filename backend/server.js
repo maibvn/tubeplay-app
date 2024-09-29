@@ -30,6 +30,7 @@ app.use(
     secret: process.env.SESSION_SECRET, // Replace with your session secret
     resave: false, // Don't resave session if nothing is changed
     saveUninitialized: false, // Don't save uninitialized sessions
+    store: store,
     cookie: {
       maxAge: 1000 * 60 * 60, // 1 hour session lifetime
       secure: false, // Set to true if you're using HTTPS
@@ -64,9 +65,9 @@ const dbxMiddleware = async (req, res, next) => {
 app.use(dbxMiddleware);
 
 // ROUTES
-app.use("/api/auth", authRouter); // Authentication routes
-// app.use("/api/playlist", playlistRouter); // Playlist management
-app.use("/api/playlist", authenticateToken, playlistRouter); // Playlist management
+app.use("/api/auth", authenticateToken, authRouter); // Authentication routes
+app.use("/api/playlist", playlistRouter); // Playlist management
+// app.use("/api/playlist", authenticateToken,  playlistRouter); // Playlist management
 
 app.listen(port, () => {
   console.log("Server is running on port 5000");

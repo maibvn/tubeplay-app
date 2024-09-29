@@ -15,7 +15,7 @@ passport.use(
         console.log(1515, "passpor.js", profile);
         // Check if user already exists in the database
         let user = await User.findOne({ googleId: profile.id });
-
+        console.log(1818, user);
         if (user) {
           done(null, user); // User exists, return user
         } else {

@@ -31,7 +31,6 @@ function NavBar({ isLogin, setIsLogin, user }) {
           null,
           { withCredentials: true }
         );
-        navigate("/");
         window.location.reload();
       } catch (error) {
         console.error("Error logging out:", error);

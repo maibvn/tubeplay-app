@@ -3,7 +3,6 @@ const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const passport = require("passport");
 const User = require("../models/user");
-
 const { signupUser, loginUser, logoutUser } = require("../controllers/auth");
 
 const router = express.Router();
@@ -65,12 +64,30 @@ router.post("/google", async (req, res) => {
 });
 
 // Route to check if the user is still logged in (session check)
-router.get("/session", (req, res) => {
-  if (req.session.user) {
-    res.status(200).json({ user: req.session.user });
-  } else {
-    res.status(401).json({ message: "No active session" });
+router.get("/checkauth", (req, res) => {
+  if (req.user) {
+    const userEmail = req.user.email;
+    return res.status(200).json({
+      message: "Authenticated via token",
+      mode: "token",
+      email: userEmail,
+    });
   }
+
+  // If no token, check if user is authenticated via session
+  if (req.session && req.session.user) {
+    const sessionUser = req.session.user;
+    return res.status(200).json({
+      message: "Authenticated via session",
+      mode: "session",
+      user: sessionUser,
+    });
+  }
+
+  // If neither token nor session authentication is present, respond with Unauthorized
+  return res
+    .status(401)
+    .json({ message: "Unauthorized: User not authenticated" });
 });
 
 module.exports = router;
