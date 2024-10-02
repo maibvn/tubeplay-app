@@ -1,0 +1,56 @@
+.controlButton {
+    padding-left: 0;
+    text-align: left;
+    width: 3rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 30px;
+  }
+  
+  .playButton {
+    color: var(--playColor, grey);
+  }
+  
+  .active {
+    color: #bb2d3b;
+  }
+  
+  .inactive {
+    color: grey;
+  }
+  
+  .listItem {
+    list-style: none;
+    position: relative;
+    padding: 1rem;
+    background-color: #c1c1c1;
+    cursor: pointer;
+  }
+  
+  .activeTrack {
+    background-color: black;
+  }
+  
+  .progressBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background-color: orange;
+    height: 100%;
+    transition: width 0.1s linear;
+  }
+  
+  .songInfo {
+    display: flex;
+    align-items: center;
+  }
+  
+  .songTitle {
+    margin-left: 10px;
+    flex-grow: 1;
+  }
+  .audioList {
+    padding-left: 0;
+  }

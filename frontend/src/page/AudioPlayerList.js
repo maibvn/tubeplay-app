@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Audio from "./components/Audio";
-// import AudioPlayer from "./components/AudioPlayer";
-// import Playlist from "./components/Playlist";
-// import Wavesurfer from "./components/Wavesurfer";
 
 const AudioPlayerList = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -52,9 +49,6 @@ const AudioPlayerList = () => {
       fetchFiles(url);
     }
   }, []);
-
-  // const audioUrl =
-  //   "https://www.dropbox.com/scl/fi/hymyf52gduklor3kk25w4/ArminvanBuurenfeat.SharondenAdel-InAndOutOfLove-OfficialMusicVideo.mp3?rlkey=h0umw2pbdbb55d6ax9mcturk5&st=c8kncu9u&dl=1";
 
   if (error) {
     return <div>Error: {error}</div>;
