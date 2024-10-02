@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
-import WaveForm from "./WaveForm";
 import { useLocation } from "react-router-dom";
+import Audio from "./components/Audio";
+// import AudioPlayer from "./components/AudioPlayer";
+// import Playlist from "./components/Playlist";
+// import Wavesurfer from "./components/Wavesurfer";
 
 const AudioPlayerList = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -65,21 +68,8 @@ const AudioPlayerList = () => {
       ) : (
         <div className="container-fluid d-flex justify-content-center">
           <div className="row">
-            <img
-              src={playlist.songs[0].thumbnail?.url}
-              style={{ width: "336px", height: "188px" }}
-            />
             <ul className="col">
-              {playlist.songs.map((file, index) => (
-                <li key={Math.random()} className="list-group-item p-4">
-                  <h3>{file.title}</h3>
-                  <audio controls>
-                    <source src={file.dropboxUrl} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
-                  {/* <WaveForm audioUrl={audioUrl} /> */}
-                </li>
-              ))}
+              <Audio playlist={playlist} />
             </ul>
           </div>
         </div>

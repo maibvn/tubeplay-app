@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Check if the model is already compiled to avoid overwriting
+
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;

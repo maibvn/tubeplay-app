@@ -1,8 +1,8 @@
 const ytdl = require("@distube/ytdl-core");
 
-exports.uploadToDropbox = async (songs, uniqueId, req) => {
+exports.uploadToDropbox = async (songs, uniqueId, req, res) => {
   const dbx = req.dbx;
-
+  // console.log(req.sesion.user);
   const uploadMultipleSongs = async (url, dropboxPath, thumbnail) => {
     const fileName = dropboxPath.split("/").pop();
 
@@ -59,6 +59,7 @@ exports.uploadToDropbox = async (songs, uniqueId, req) => {
       console.error("Error checking existing files:", error);
       return;
     }
+    console.log(fileName, dropboxPath);
 
     return new Promise((resolve, reject) => {
       const ytdlStream = ytdl(url, { filter: "audioonly" });
@@ -96,6 +97,9 @@ exports.uploadToDropbox = async (songs, uniqueId, req) => {
           });
         } catch (error) {
           console.error("Error uploading to Dropbox:", error);
+          res
+            .status(500)
+            .json({ status: "error", message: "Failed to upload file." });
           reject(error);
         }
       });
@@ -111,7 +115,7 @@ exports.uploadToDropbox = async (songs, uniqueId, req) => {
   const songUploads = await Promise.all(
     songs.map(async (song) => {
       let dropboxPath = `/registerdUsers/${song.title}.mp3`;
-      if (!req.user) {
+      if (!req.user && !req.session.user) {
         dropboxPath = `/temp/${uniqueId}-${song.title}.mp3`;
       }
       const result = await uploadMultipleSongs(

@@ -5,6 +5,17 @@ const Playlist = require("../models/playlist");
 const { v4: uuidv4 } = require("uuid");
 const { cleanSongTitles } = require("../utils/cleanSongTitles");
 
+function sanitizeDropboxPath(fileName) {
+  // Preserve /temp/ and /registeredUsers/ while removing invalid characters
+  const sanitizedPath = fileName
+    .replace(/[^\x00-\x7F]/g, "") // Remove non-ASCII characters
+    .trim() // Trim whitespace from start and end
+    .replace(/^[.]+|[.]$/g, ""); // Trim periods from start and end
+
+  // Handle case where the path becomes empty
+  return sanitizedPath === "" ? "untitled" : sanitizedPath;
+}
+
 // Helper to handle user playlist logic
 const handleUserPlaylist = async (playlistInfo) => {
   const existingPlaylist = await Playlist.findOne({
@@ -23,28 +34,6 @@ const handleUserPlaylist = async (playlistInfo) => {
 
   return newPlaylist._id;
 };
-// // Helper to clean song titles
-// const cleanSongTitles = (songs, uniqueId) => {
-//   return songs.map((s) => ({
-//     ...s,
-//     title: s.title
-//       .replace(new RegExp(`^${uniqueId}-`), "")
-//       .replace(/\.mp3$/, ""),
-//   }));
-// };
-
-// exports.checkAuth = (req, res) => {
-//   // Check if user is authenticated
-//   if (!req.user) {
-//     return res
-//       .status(401)
-//       .json({ message: "Unauthorized: User not authenticated" });
-//   }
-//   // Access user email from req.userEmail or res.locals.userEmail
-//   const userEmail = req.user.email;
-
-//   res.status(200).json({ message: "Authenticated", email: userEmail });
-// };
 
 exports.generatePlaylist = async (req, res, next) => {
   // Check for the playlist URL in the request
@@ -62,9 +51,18 @@ exports.generatePlaylist = async (req, res, next) => {
   try {
     // Fetch playlist information from the provided URL
     const { playlistInfo } = await getPlaylistUrl(playlistUrl);
+    playlistInfo.songs = playlistInfo.songs.map((song) => ({
+      ...song, // Spread the existing properties
+      title: sanitizeDropboxPath(song.title), // Sanitize the title
+    }));
 
     // Upload songs to Dropbox
-    const results = await uploadToDropbox(playlistInfo.songs, uniqueId, req);
+    const results = await uploadToDropbox(
+      playlistInfo.songs,
+      uniqueId,
+      req,
+      res
+    );
 
     // Update the Dropbox URLs for each song
     const updatedSongs = results.map((song) => ({
