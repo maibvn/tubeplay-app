@@ -14,6 +14,14 @@ const playlistSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  likes: {
+    type: Number,
+    default: 0,
+  },
+  totalDuration: {
+    type: String,
+    default: "00:00:00",
+  },
   songs: [
     {
       title: {

@@ -13,6 +13,6 @@ router.get("/temp/:unregUserId", playlistController.getTempSongs);
 // Route to get a playlist
 router.get("/:playlistId", playlistController.getSinglePlaylist);
 
-// router.get("/", playlistController.checkAuth);
+router.get("/like-playlist/:id", playlistController.addLikeToPlaylist);
 
 module.exports = router;

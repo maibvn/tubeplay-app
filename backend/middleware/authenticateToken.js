@@ -8,7 +8,6 @@ const authenticateToken = async (req, res, next) => {
   if (!token) {
     return next();
   }
-
   try {
     // Verify and decode the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

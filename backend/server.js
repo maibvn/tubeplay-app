@@ -80,8 +80,8 @@ app.get("/proxy", (req, res) => {
 });
 
 app.use("/api/auth", authenticateToken, authRouter); // Authentication routes
-app.use("/api/playlist", playlistRouter); // Playlist management
-// app.use("/api/playlist", authenticateToken,  playlistRouter); // Playlist management
+// app.use("/api/playlist", playlistRouter); // Playlist management
+app.use("/api/playlist", authenticateToken, playlistRouter); // Playlist management
 
 // app.use((err, req, res, next) => {
 //   console.error(err.stack);

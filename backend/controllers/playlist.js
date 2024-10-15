@@ -28,6 +28,7 @@ const handleUserPlaylist = async (playlistInfo) => {
     plUrl: playlistInfo.plUrl,
     plSongNum: playlistInfo.plSongNum,
     songs: playlistInfo.songs,
+    totalDuration: playlistInfo.totalDuration,
   });
 
   await newPlaylist.save();
@@ -69,6 +70,7 @@ exports.generatePlaylist = async (req, res, next) => {
       ...song,
       dropboxUrl: song.dropboxUrl.replace(/dl=0$/, "dl=1"),
     }));
+
     playlistInfo.songs = updatedSongs;
 
     // Handle playlist creation or lookup for authenticated users
@@ -85,6 +87,7 @@ exports.generatePlaylist = async (req, res, next) => {
         return null; // Or handle the error as needed
       }
       // Only push the new playlist ID if it's not already in the user's playlists
+
       if (!userDb.playlists.includes(playlistId)) {
         userDb.playlists.push(playlistId);
         await userDb.save(); // Save the updated user
@@ -204,12 +207,15 @@ exports.getTempSongs = async (req, res) => {
 };
 
 exports.getAllPlaylists = async (req, res) => {
-  if (!req.user) {
-    return res
-      .status(401)
-      .json({ message: "Unauthorized: User not authenticated" });
-  }
-  const userEmail = req.user.email; // Get the user's email from the request
+  const user = req.session.user || req.user;
+
+  // if (!req.user) {
+  //   return res
+  //     .status(401)
+  //     .json({ message: "Unauthorized: User not authenticated" });
+  // }
+
+  const userEmail = req.user.email ? req.user.email : req.session.email; // Get the user's email from the request
 
   try {
     // Find the user by email
@@ -224,5 +230,27 @@ exports.getAllPlaylists = async (req, res) => {
   } catch (error) {
     console.error("Error fetching playlists:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Endpoint to add a like to a playlist
+exports.addLikeToPlaylist = async (req, res) => {
+  const playlistId = req.params.id;
+
+  try {
+    const updatedPlaylist = await Playlist.findByIdAndUpdate(
+      playlistId,
+      { $inc: { likes: 1 } }, // Increment the likes by 1
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedPlaylist) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+
+    res.status(200).json({ message: "Like added!", playlist: updatedPlaylist });
+  } catch (error) {
+    console.error("Error adding like to playlist:", error);
+    res.status(500).json({ error: "Could not add like" });
   }
 };
